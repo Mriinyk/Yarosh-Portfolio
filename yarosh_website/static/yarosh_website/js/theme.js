@@ -4,17 +4,49 @@ const savedTheme = localStorage.getItem(themeStorageKey);
 document.documentElement.dataset.theme = savedTheme === "dark" ? "dark" : "light";
 
 function updateThemeToggle() {
-    const toggle = document.getElementById("siteThemeToggle");
-    if (!(toggle instanceof HTMLButtonElement)) {
+    const isDark = document.documentElement.dataset.theme === "dark";
+    document.querySelectorAll(".site-theme-toggle").forEach((toggle) => {
+        if (!(toggle instanceof HTMLButtonElement)) {
+            return;
+        }
+
+        toggle.setAttribute("aria-pressed", String(isDark));
+        toggle.setAttribute(
+            "aria-label",
+            isDark ? "Увімкнути світлу тему" : "Увімкнути темну тему",
+        );
+    });
+}
+
+function applyTheme(theme) {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem(themeStorageKey, theme);
+    updateThemeToggle();
+}
+
+function toggleTheme(button) {
+    const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    const bounds = button.getBoundingClientRect();
+    const originX = bounds.left + bounds.width / 2;
+    const originY = bounds.top + bounds.height / 2;
+    const revealRadius = Math.hypot(
+        Math.max(originX, window.innerWidth - originX),
+        Math.max(originY, window.innerHeight - originY),
+    );
+
+    document.documentElement.style.setProperty("--theme-origin-x", `${originX}px`);
+    document.documentElement.style.setProperty("--theme-origin-y", `${originY}px`);
+    document.documentElement.style.setProperty("--theme-reveal-radius", `${revealRadius}px`);
+
+    if (
+        typeof document.startViewTransition === "function"
+        && !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+        document.startViewTransition(() => applyTheme(nextTheme));
         return;
     }
 
-    const isDark = document.documentElement.dataset.theme === "dark";
-    toggle.setAttribute("aria-pressed", String(isDark));
-    toggle.setAttribute(
-        "aria-label",
-        isDark ? "Увімкнути світлу тему" : "Увімкнути темну тему",
-    );
+    applyTheme(nextTheme);
 }
 
 document.addEventListener("DOMContentLoaded", updateThemeToggle);
@@ -24,13 +56,10 @@ document.addEventListener("click", (event) => {
         return;
     }
 
-    const toggle = event.target.closest("#siteThemeToggle");
+    const toggle = event.target.closest(".site-theme-toggle");
     if (!(toggle instanceof HTMLButtonElement)) {
         return;
     }
 
-    const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
-    document.documentElement.dataset.theme = nextTheme;
-    localStorage.setItem(themeStorageKey, nextTheme);
-    updateThemeToggle();
+    toggleTheme(toggle);
 });

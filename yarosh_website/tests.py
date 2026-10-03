@@ -14,10 +14,16 @@ class HomePageTemplateTests(TestCase):
         self.assertContains(response, "Увійти")
         self.assertContains(response, "Зв'язатися")
         self.assertContains(response, 'id="siteThemeToggle"')
+        self.assertContains(response, 'id="siteThemeToggleMobile"')
         self.assertContains(response, "Увімкнути темну тему")
         self.assertContains(response, "yarosh_website/images/logo.png")
         self.assertContains(response, "yarosh_website/css/style.css")
         self.assertContains(response, "yarosh_website/js/theme.js")
+        rendered = response.content.decode()
+        self.assertLess(
+            rendered.index('id="siteThemeToggleMobile"'),
+            rendered.index('id="siteNavbar"'),
+        )
 
     def test_login_navigation_opens_login_page(self):
         response = self.client.get(reverse("index"))

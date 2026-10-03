@@ -29,10 +29,33 @@ html[data-theme="dark"] {
     --auth-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.35);
 }
 
+@supports (view-transition-name: root) {
+    @media (prefers-reduced-motion: no-preference) {
+        ::view-transition-old(root) {
+            animation: none;
+        }
+
+        ::view-transition-new(root) {
+            animation: theme-wave-reveal 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+        }
+
+        @keyframes theme-wave-reveal {
+            from {
+                clip-path: circle(0 at var(--theme-origin-x, 50vw) var(--theme-origin-y, 50vh));
+            }
+
+            to {
+                clip-path: circle(var(--theme-reveal-radius, 150vmax) at var(--theme-origin-x, 50vw) var(--theme-origin-y, 50vh));
+            }
+        }
+    }
+}
+
 body {
     min-height: 100vh;
     background: var(--page-background);
     color: var(--nav-ink);
+    transition: background-color 500ms ease, color 500ms ease;
 }
 
 .site-header {
@@ -56,6 +79,7 @@ body {
 }
 
 .site-navbar-top {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -123,6 +147,22 @@ body {
 
 .site-theme-toggle {
     cursor: pointer;
+}
+
+.site-theme-toggle-mobile {
+    display: none;
+}
+
+.site-theme-toggle-desktop {
+    display: flex;
+}
+
+.site-navbar-top .site-theme-toggle-mobile {
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    width: auto;
+    transform: translateY(-50%);
 }
 
 .site-user-name {
@@ -468,6 +508,10 @@ html[data-theme="dark"] .auth-link {
         margin-right: auto;
     }
 
+    .site-links-nav {
+        padding-right: 3.1rem;
+    }
+
     .site-nav-link::after {
         position: absolute;
         right: 1rem;
@@ -521,6 +565,22 @@ html[data-theme="dark"] .auth-link {
         transform: translate(-50%, -50%) scale(1.08);
     }
 
+    .site-navbar-top .site-theme-toggle {
+        display: flex;
+        right: auto;
+        left: 0;
+        width: auto;
+        transform: translateY(-50%);
+    }
+
+    .site-navbar-top .site-theme-toggle-mobile {
+        display: flex;
+    }
+
+    .site-theme-toggle-desktop {
+        display: none;
+    }
+
     .site-logo {
         width: 2rem;
         height: 2rem;
@@ -571,6 +631,13 @@ html[data-theme="dark"] .auth-link {
 
     .auth-card {
         padding: 1.5rem;
+    }
+}
+
+@media (max-width: 767.98px) and (orientation: landscape) {
+    .site-navbar-top .site-theme-toggle-mobile {
+        right: 0.75rem;
+        left: auto;
     }
 }
 
