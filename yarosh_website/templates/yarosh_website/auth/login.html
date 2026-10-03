@@ -1,0 +1,49 @@
+{% extends 'yarosh_website/base.html' %}
+{% load static %}
+
+{% block title %}Вхід | Yarosh Portfolio{% endblock %}
+{% block body_class %}auth-site{% endblock %}
+
+{% block content %}
+<section class="auth-page" aria-labelledby="authTitle" data-auth-view="login">
+    <div class="auth-card">
+        <div class="auth-heading">
+            <a class="auth-logo-link" href="{% url 'index' %}" aria-label="Yarosh Portfolio — головна">
+                <img class="auth-logo" src="{% static 'yarosh_website/images/logo.png' %}" alt="Логотип Yarosh Portfolio">
+            </a>
+            <h1 class="auth-title" id="authTitle">Вхід</h1>
+            <p class="auth-intro">Увійдіть, щоб зв'язатися з нами.</p>
+        </div>
+
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next|default:'' }}">
+
+            {% if form.non_field_errors %}
+                <div class="auth-errors" role="alert">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            {% for field in form %}
+                <div class="auth-field">
+                    <label class="auth-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}
+                        <p class="auth-field-error">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+
+            <button class="auth-submit" type="submit">Увійти</button>
+        </form>
+
+        <p class="auth-switch">
+            Ще не маєте акаунта?
+            <a class="auth-link auth-transition-link" href="{% url 'signup' %}{% if next %}?next={{ next|urlencode }}{% endif %}">Зареєструватися</a>
+        </p>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'yarosh_website/js/auth.js' %}" defer></script>
+{% endblock %}
