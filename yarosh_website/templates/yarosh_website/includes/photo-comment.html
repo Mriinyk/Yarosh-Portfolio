@@ -1,0 +1,30 @@
+<article class="photo-comment" data-comment-id="{{ comment.pk }}">
+    <div class="photo-comment-heading">
+        <strong>{{ comment.user.username }}</strong>
+        <time datetime="{{ comment.created_at|date:'c' }}">{{ comment.created_at|date:"d.m.Y H:i" }}</time>
+    </div>
+    <p>{{ comment.text }}</p>
+    {% if user.is_authenticated %}
+        <button class="photo-comment-reply" type="button" data-reply-toggle
+                aria-expanded="false" aria-controls="photoReplyForm-{{ comment.pk }}">
+            Відповісти
+        </button>
+        <form class="photo-comment-form photo-comment-reply-form" id="photoReplyForm-{{ comment.pk }}"
+              method="post" action="{% url 'photo_session_comment' photo_session_id %}"
+              data-comment-form hidden>
+            {% csrf_token %}
+            <input type="hidden" name="parent_id" value="{{ comment.pk }}">
+            <label class="visually-hidden" for="photoReplyText-{{ comment.pk }}">
+                Відповідь на коментар від {{ comment.user.username }}
+            </label>
+            <textarea id="photoReplyText-{{ comment.pk }}" name="text" maxlength="2000"
+                      rows="2" placeholder="Ваша відповідь..." required></textarea>
+            <button type="submit">Опублікувати</button>
+        </form>
+    {% endif %}
+    <div class="photo-comment-replies" data-replies-list>
+        {% for reply in comment.replies.all %}
+            {% include 'yarosh_website/includes/photo-comment.html' with comment=reply photo_session_id=photo_session_id %}
+        {% endfor %}
+    </div>
+</article>

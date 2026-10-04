@@ -34,7 +34,10 @@ from .photo_gallery import PhotoGalleryError, get_photo_session_images
 
 def index(request):
     slides = HeroSlide.objects.filter(is_active=True)
-    photo_sessions = PhotoSession.objects.filter(is_active=True)
+    photo_sessions = PhotoSession.objects.filter(is_active=True).order_by(
+        "-created_at",
+        "-pk",
+    )[:3]
     biography = Biography.objects.first()
     return render(
         request,
@@ -56,9 +59,10 @@ def photo_sessions(request):
     ).prefetch_related(
         Prefetch(
             "comments",
-            queryset=PhotoSessionComment.objects.select_related("user").order_by(
-                "-created_at"
-            ),
+            queryset=PhotoSessionComment.objects.filter(
+                parent__isnull=True
+            ).select_related("user").order_by("created_at", "pk"),
+            to_attr="root_comments",
         )
     ).annotate(
         likes_count=Count("likes", distinct=True),
@@ -172,9 +176,27 @@ def photo_session_comment(request, pk):
             {"error": "Коментар має містити від 1 до 2000 символів."},
             status=400,
         )
+    parent_id = request.POST.get("parent_id", "").strip()
+    parent = None
+    if parent_id:
+        if not parent_id.isdigit():
+            return JsonResponse(
+                {"error": "Не вдалося знайти коментар для відповіді."},
+                status=400,
+            )
+        parent = PhotoSessionComment.objects.filter(
+            pk=parent_id,
+            photo_session=photo_session,
+        ).first()
+        if parent is None:
+            return JsonResponse(
+                {"error": "Не вдалося знайти коментар для відповіді."},
+                status=400,
+            )
     comment = PhotoSessionComment.objects.create(
         photo_session=photo_session,
         user=request.user,
+        parent=parent,
         text=text,
     )
     return JsonResponse(
@@ -183,6 +205,8 @@ def photo_session_comment(request, pk):
             "username": comment.user.username,
             "text": comment.text,
             "created_at": comment.created_at.strftime("%d.%m.%Y %H:%M"),
+            "comment_id": comment.pk,
+            "parent_id": comment.parent_id,
             "comment_count": photo_session.comments.count(),
         }
     )

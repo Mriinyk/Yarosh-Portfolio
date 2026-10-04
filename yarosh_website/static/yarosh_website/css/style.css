@@ -29,6 +29,35 @@ html[data-theme="dark"] {
     --auth-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.35);
 }
 
+html[data-theme="dark"] input:-webkit-autofill,
+html[data-theme="dark"] input:-webkit-autofill:hover,
+html[data-theme="dark"] input:-webkit-autofill:focus,
+html[data-theme="dark"] input:-webkit-autofill:active,
+html[data-theme="dark"] textarea:-webkit-autofill,
+html[data-theme="dark"] textarea:-webkit-autofill:hover,
+html[data-theme="dark"] textarea:-webkit-autofill:focus,
+html[data-theme="dark"] select:-webkit-autofill,
+html[data-theme="dark"] select:-webkit-autofill:hover,
+html[data-theme="dark"] select:-webkit-autofill:focus,
+html[data-theme="dark"] input:autofill,
+html[data-theme="dark"] textarea:autofill,
+html[data-theme="dark"] select:autofill {
+    background-color: #1b1e23 !important;
+    -webkit-text-fill-color: var(--nav-ink) !important;
+    caret-color: var(--nav-ink) !important;
+    border-color: var(--auth-border) !important;
+    -webkit-box-shadow: 0 0 0 1000px #1b1e23 inset !important;
+    box-shadow: 0 0 0 1000px #1b1e23 inset !important;
+    transition: background-color 99999s ease-out 0s;
+}
+
+html[data-theme="dark"] input:focus,
+html[data-theme="dark"] textarea:focus,
+html[data-theme="dark"] select:focus {
+    background-color: #1b1e23 !important;
+    color: var(--nav-ink);
+}
+
 @supports (view-transition-name: root) {
     @media (prefers-reduced-motion: no-preference) {
         ::view-transition-old(root) {
@@ -750,6 +779,51 @@ html[data-theme="dark"] .photo-session-card.is-centered:hover {
     font-size: clamp(1.2rem, 2.4vw, 1.55rem);
     font-weight: 600;
     line-height: 1.5;
+}
+
+.biography-social-links {
+    display: flex;
+    justify-content: center;
+    gap: 0.8rem;
+    margin-top: 1.5rem;
+}
+
+.biography-social-links a {
+    display: grid;
+    width: 3rem;
+    height: 3rem;
+    border: 1px solid var(--auth-border);
+    border-radius: 50%;
+    color: var(--nav-link-ink);
+    place-items: center;
+    transition: color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.biography-social-links a:hover,
+.biography-social-links a:focus-visible {
+    border-color: var(--accent);
+    color: #168c0a;
+    box-shadow: 0 0 0.8rem rgba(38, 232, 14, 0.18);
+}
+
+.biography-social-links svg {
+    width: 1.45rem;
+    height: 1.45rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.7;
+}
+
+.biography-social-links a:first-child svg {
+    fill: currentColor;
+    stroke: none;
+}
+
+.biography-social-links .biography-social-dot {
+    fill: currentColor;
+    stroke: none;
 }
 
 @media (max-width: 767.98px) {
@@ -1588,7 +1662,7 @@ html[data-theme="dark"] .auth-link {
 .photo-type-link:hover,
 .photo-type-link:focus-visible,
 .photo-type-link.is-active {
-    color: var(--nav-ink);
+    color: #168c0a;
     text-shadow: 0 0 0.8rem rgba(38, 232, 14, 0.48);
 }
 
@@ -1638,7 +1712,7 @@ html[data-theme="dark"] .auth-link {
     position: relative;
     display: block;
     width: 100%;
-    aspect-ratio: 4 / 3;
+    aspect-ratio: var(--cover-ratio, 1.333);
     padding: 0;
     overflow: hidden;
     border: 0;
@@ -1871,6 +1945,13 @@ html[data-theme="dark"] .auth-link {
     gap: 0.5rem;
 }
 
+.photo-comment-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
 .photo-comment strong {
     color: #168c0a;
     font-size: 0.83rem;
@@ -1887,6 +1968,60 @@ html[data-theme="dark"] .auth-link {
     font-size: 0.84rem;
     overflow-wrap: anywhere;
     white-space: pre-wrap;
+}
+
+.photo-comment-replies {
+    display: grid;
+    gap: 0.55rem;
+    margin: 0.65rem 0 0 0.75rem;
+    padding-left: 0.7rem;
+    border-left: 1px solid var(--auth-border);
+}
+
+.photo-comment-reply {
+    display: block;
+    margin: 0.65rem 0 0 auto;
+    padding: 0.38rem 0.85rem;
+    border: 1px solid rgba(38, 232, 14, 0.58);
+    border-radius: 999px;
+    background: linear-gradient(
+        120deg,
+        rgba(38, 232, 14, 0.16),
+        rgba(38, 232, 14, 0.06)
+    );
+    color: #168c0a;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        color 180ms ease,
+        border-color 180ms ease,
+        background 180ms ease,
+        box-shadow 180ms ease,
+        transform 180ms ease;
+}
+
+.photo-comment-reply:hover,
+.photo-comment-reply:focus-visible,
+.photo-comment-reply[aria-expanded="true"] {
+    border-color: #26e80e;
+    background: linear-gradient(120deg, #26e80e, #8df178);
+    color: #173313;
+    box-shadow: 0 0 1rem rgba(38, 232, 14, 0.28);
+    transform: translateY(-1px);
+}
+
+.photo-comment-reply:focus-visible {
+    outline: 2px solid rgba(38, 232, 14, 0.6);
+    outline-offset: 3px;
+}
+
+.photo-comment-reply-form {
+    margin-top: 0.6rem;
+}
+
+.photo-comment-reply-form[hidden] {
+    display: none;
 }
 
 .photo-comments-empty,
@@ -2282,7 +2417,7 @@ html[data-theme="dark"] .photo-work-card:focus-within {
     }
 
     .photo-work-cover {
-        aspect-ratio: 1 / 0.78;
+        aspect-ratio: var(--cover-ratio, 1.28);
     }
 
     .photo-admin-add {
@@ -2348,8 +2483,8 @@ html[data-theme="dark"] .photo-work-card:focus-within {
 
 .photo-share-links a svg {
     display: block;
-    width: 1.2rem;
-    height: 1.2rem;
+    width: 1.8rem;
+    height: 1.8rem;
     fill: currentColor;
 }
 
@@ -2363,8 +2498,8 @@ html[data-theme="dark"] .photo-work-card:focus-within {
 }
 
 .photo-share-links a[aria-label*="Facebook"] svg {
-    width: 1.05rem;
-    height: 1.05rem;
+    width: 1.58rem;
+    height: 1.58rem;
 }
 
 .photo-share-copy button {
@@ -2385,6 +2520,22 @@ html[data-theme="dark"] .photo-work-card:focus-within {
 .photo-editor-actions button:hover,
 .photo-share-copy button:hover {
     box-shadow: 0 0 1rem rgba(38, 232, 14, 0.4);
+}
+
+.photo-delete-card .photo-editor-actions button {
+    border-color: rgba(217, 83, 79, 0.72);
+    background: rgba(217, 83, 79, 0.14);
+    color: #fff;
+}
+
+.photo-delete-card .photo-editor-actions button:hover,
+.photo-delete-card .photo-editor-actions button:focus-visible {
+    border-color: #ef5350;
+    background: rgba(217, 83, 79, 0.24);
+    color: #fff;
+    box-shadow:
+        0 0 0.75rem rgba(239, 83, 80, 0.4),
+        0 0 1.4rem rgba(239, 83, 80, 0.2);
 }
 
 .photo-new-category-field[hidden] {
@@ -2411,6 +2562,16 @@ html[data-theme="dark"] .photo-comment-form textarea,
 html[data-theme="dark"] .photo-form-control,
 html[data-theme="dark"] .photo-share-copy input {
     color: var(--nav-ink);
+}
+
+html[data-theme="dark"] :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="hidden"]),
+    textarea,
+    select
+) {
+    background-color: #1b1e23 !important;
+    color: var(--nav-ink) !important;
+    -webkit-text-fill-color: var(--nav-ink);
 }
 
 @media (max-width: 767.98px) {

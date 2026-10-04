@@ -1,3 +1,4 @@
+from datetime import timedelta
 from unittest.mock import Mock, patch
 
 from django.test import TestCase
@@ -5,6 +6,7 @@ from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+from django.utils import timezone
 
 from .contact_services import send_telegram_notification
 from .models import (
@@ -167,6 +169,36 @@ class HomePageTemplateTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Незабаром тут з'являться нові фотосесії.")
+
+    def test_homepage_shows_only_three_newest_sessions_without_hiding_others(self):
+        published_at = timezone.now()
+        sessions = [
+            PhotoSession.objects.create(
+                title=f"Фотосесія {index}",
+                cover_url=f"https://images.example.com/session-{index}.jpg",
+                drive_folder_url=(
+                    f"https://drive.google.com/drive/folders/session-{index}"
+                ),
+                created_at=published_at + timedelta(minutes=index),
+            )
+            for index in range(5)
+        ]
+
+        homepage = self.client.get(reverse("index"))
+        photo_page = self.client.get(reverse("photos"))
+
+        homepage_titles = [
+            session.title for session in homepage.context["photo_sessions"]
+        ]
+        photo_page_titles = [
+            session.title for session in photo_page.context["photo_sessions"]
+        ]
+        self.assertEqual(
+            homepage_titles,
+            [session.title for session in reversed(sessions[-3:])],
+        )
+        self.assertEqual(len(homepage.context["photo_sessions"]), 3)
+        self.assertEqual(set(photo_page_titles), {session.title for session in sessions})
 
     def test_homepage_renders_biography_section_with_seeded_text(self):
         response = self.client.get(reverse("index"))
@@ -887,6 +919,66 @@ class PhotoSessionPageTests(TestCase):
             ).exists()
         )
         self.assertIn(PhotoSessionComment, admin.site._registry)
+
+    def test_authenticated_user_can_reply_to_a_comment_in_the_same_session(self):
+        viewer = get_user_model().objects.create_user(
+            username="photo-replier",
+            password="test-password",
+        )
+        parent = PhotoSessionComment.objects.create(
+            photo_session=self.photo_session,
+            user=viewer,
+            text="Початковий коментар",
+        )
+        self.client.force_login(viewer)
+
+        response = self.client.post(
+            reverse("photo_session_comment", args=[self.photo_session.pk]),
+            {"text": "Відповідь", "parent_id": str(parent.pk)},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["parent_id"], parent.pk)
+        self.assertEqual(response.json()["comment_count"], 2)
+        reply = PhotoSessionComment.objects.get(
+            photo_session=self.photo_session,
+            parent=parent,
+            text="Відповідь",
+        )
+        rendered_page = self.client.get(reverse("photos"))
+        self.assertContains(rendered_page, f'data-comment-id="{parent.pk}"')
+        self.assertContains(rendered_page, f'data-comment-id="{reply.pk}"')
+
+    def test_comment_reply_cannot_target_another_photo_session(self):
+        viewer = get_user_model().objects.create_user(
+            username="photo-replier-other-session",
+            password="test-password",
+        )
+        other_session = PhotoSession.objects.create(
+            title="Інша фотосесія",
+            cover_url="https://images.example.com/other.jpg",
+            drive_folder_url="https://drive.google.com/drive/folders/other",
+        )
+        parent = PhotoSessionComment.objects.create(
+            photo_session=other_session,
+            user=viewer,
+            text="Коментар з іншої фотосесії",
+        )
+        self.client.force_login(viewer)
+
+        response = self.client.post(
+            reverse("photo_session_comment", args=[self.photo_session.pk]),
+            {"text": "Некоректна відповідь", "parent_id": str(parent.pk)},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.json()["error"],
+            "Не вдалося знайти коментар для відповіді.",
+        )
+        self.assertFalse(
+            PhotoSessionComment.objects.filter(text="Некоректна відповідь").exists()
+        )
 
     def test_share_action_is_recorded_for_anonymous_visitors(self):
         self.client.get(reverse("photos"))

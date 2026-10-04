@@ -290,13 +290,21 @@ class PhotoSessionComment(models.Model):
         related_name="photo_session_comments",
         verbose_name="Автор",
     )
+    parent = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="replies",
+        verbose_name="Батьківський коментар",
+    )
     text = models.TextField(max_length=2000, verbose_name="Коментар")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата")
 
     class Meta:
         verbose_name = "Photo session comment"
         verbose_name_plural = "Photo session comments"
-        ordering = ["created_at"]
+        ordering = ["created_at", "pk"]
 
     def __str__(self):
         return f"{self.user}: {self.photo_session}"
