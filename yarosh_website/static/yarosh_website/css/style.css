@@ -1697,8 +1697,8 @@ html[data-theme="dark"] .auth-link {
         transform 350ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
-.photo-work-card:hover,
-.photo-work-card:focus-within {
+.photo-work-card:not(.is-gallery-dismissed):hover,
+.photo-work-card:not(.is-gallery-dismissed):focus-within {
     border-color: rgba(38, 232, 14, 0.48);
     background: color-mix(in srgb, var(--auth-glass) 86%, transparent);
     box-shadow:
@@ -1706,6 +1706,17 @@ html[data-theme="dark"] .auth-link {
         0 1.25rem 3rem rgba(38, 232, 14, 0.055),
         0 2.75rem 5.5rem rgba(20, 28, 20, 0.085);
     transform: translateY(-3px);
+}
+
+.photo-work-card.is-gallery-dismissed:hover,
+.photo-work-card.is-gallery-dismissed:focus-within {
+    border-color: var(--auth-border);
+    background: color-mix(in srgb, var(--auth-glass) 70%, transparent);
+    box-shadow:
+        0 0.25rem 0.75rem rgba(20, 28, 20, 0.025),
+        0 1rem 2.5rem rgba(20, 28, 20, 0.045),
+        0 2.5rem 5rem rgba(20, 28, 20, 0.035);
+    transform: none;
 }
 
 .photo-work-cover {
@@ -1758,6 +1769,16 @@ html[data-theme="dark"] .auth-link {
 .photo-work-cover:hover .photo-work-cover-overlay,
 .photo-work-cover:focus-visible .photo-work-cover-overlay {
     opacity: 1;
+}
+
+.photo-work-card.is-gallery-dismissed .photo-work-cover:hover img,
+.photo-work-card.is-gallery-dismissed .photo-work-cover:focus-visible img {
+    transform: none;
+}
+
+.photo-work-card.is-gallery-dismissed .photo-work-cover:hover .photo-work-cover-overlay,
+.photo-work-card.is-gallery-dismissed .photo-work-cover:focus-visible .photo-work-cover-overlay {
+    opacity: 0;
 }
 
 .photo-work-details {
@@ -2366,8 +2387,8 @@ html[data-theme="dark"] .site-footer-panel {
         0 2.7rem 5rem rgba(0, 0, 0, 0.13);
 }
 
-html[data-theme="dark"] .photo-work-card:hover,
-html[data-theme="dark"] .photo-work-card:focus-within {
+html[data-theme="dark"] .photo-work-card:not(.is-gallery-dismissed):hover,
+html[data-theme="dark"] .photo-work-card:not(.is-gallery-dismissed):focus-within {
     box-shadow:
         0 0.4rem 1.1rem rgba(38, 232, 14, 0.07),
         0 1.4rem 3.2rem rgba(38, 232, 14, 0.09),

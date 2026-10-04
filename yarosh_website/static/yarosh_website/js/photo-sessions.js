@@ -389,7 +389,7 @@
         }
     };
 
-    const closeGallery = () => {
+    const closeGallery = ({ pointerInitiated = false } = {}) => {
         requestVersion += 1;
         gallery.hidden = true;
         image.hidden = true;
@@ -397,19 +397,53 @@
         document.body.style.overflow = previousBodyOverflow;
         waitForMobileScrollToResume();
         if (activeTrigger) {
-            activeTrigger.focus({ preventScroll: true });
+            const activeCard = activeTrigger.closest(".photo-work-card");
+            if (activeCard) {
+                if (pointerInitiated) {
+                    activeTrigger.blur();
+                    if (activeCard.matches(":hover")) {
+                        activeCard.classList.add("is-gallery-dismissed");
+                        const clearDismissedState = () => {
+                            activeCard.classList.remove("is-gallery-dismissed");
+                            activeCard.removeEventListener(
+                                "pointerleave",
+                                clearDismissedState,
+                            );
+                        };
+                        activeCard.addEventListener(
+                            "pointerleave",
+                            clearDismissedState,
+                        );
+                    }
+                } else {
+                    activeCard.classList.add("is-gallery-dismissed");
+                    const clearOnFocusLeave = (event) => {
+                        if (!activeCard.contains(event.relatedTarget)) {
+                            activeCard.classList.remove("is-gallery-dismissed");
+                            activeCard.removeEventListener(
+                                "focusout",
+                                clearOnFocusLeave,
+                            );
+                        }
+                    };
+                    activeCard.addEventListener("focusout", clearOnFocusLeave);
+                    activeTrigger.focus({ preventScroll: true });
+                }
+            }
         }
     };
 
     document.querySelectorAll("[data-gallery-url]").forEach((trigger) => {
         trigger.addEventListener("click", () => openGallery(trigger));
     });
-    closeButton.addEventListener("click", closeGallery);
+    closeButton.addEventListener("click", (event) => {
+        closeGallery({ pointerInitiated: event.detail > 0 });
+    });
     previousButton.addEventListener("click", () => showImage(currentIndex - 1));
     nextButton.addEventListener("click", () => showImage(currentIndex + 1));
     gallery.addEventListener("click", (event) => {
         if (event.target === gallery || event.target === viewer) {
-            closeGallery();
+            closeGallery({ pointerInitiated: event.detail > 0 });
         }
     });
     image.addEventListener("error", () => {
