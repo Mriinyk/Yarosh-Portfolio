@@ -7,10 +7,85 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
 from .contact_services import send_telegram_notification
-from .models import ContactRequest
+from .models import ContactRequest, HeroSlide
 
 
 class HomePageTemplateTests(TestCase):
+    def test_hero_slide_normalizes_google_drive_image_links(self):
+        drive_url = "https://drive.google.com/file/d/example-id/view?usp=sharing"
+        slide = HeroSlide(image_url=drive_url)
+
+        self.assertEqual(
+            slide.direct_image_url,
+            "https://lh3.googleusercontent.com/d/example-id",
+        )
+
+        slide.save()
+        slide.refresh_from_db()
+        self.assertEqual(
+            slide.image_url,
+            "https://lh3.googleusercontent.com/d/example-id",
+        )
+
+    def test_homepage_uses_google_drive_direct_image_url(self):
+        drive_url = "https://drive.google.com/open?id=google-drive-id"
+        slide = HeroSlide.objects.create(
+            image_url="https://images.example.com/placeholder.jpg",
+        )
+        HeroSlide.objects.filter(pk=slide.pk).update(image_url=drive_url)
+
+        response = self.client.get(reverse("index"))
+
+        self.assertContains(
+            response,
+            f'src="https://lh3.googleusercontent.com/d/google-drive-id"',
+        )
+        self.assertNotContains(response, drive_url)
+
+    def test_homepage_shows_empty_slider_when_no_active_slides_exist(self):
+        response = self.client.get(reverse("index"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Поки немає слайдів")
+        self.assertContains(response, "yarosh_website/js/hero-slider.js")
+        self.assertNotContains(response, "data-hero-slider")
+
+    def test_homepage_renders_active_slides_in_configured_order(self):
+        second = HeroSlide.objects.create(
+            image_url="https://images.example.com/second.jpg",
+            order=2,
+        )
+        inactive = HeroSlide.objects.create(
+            image_url="https://images.example.com/hidden.jpg",
+            order=1,
+            is_active=False,
+        )
+        first = HeroSlide.objects.create(
+            image_url="https://images.example.com/first.jpg",
+            order=1,
+        )
+
+        response = self.client.get(reverse("index"))
+        rendered = response.content.decode()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Yarosh Oleksandra")
+        self.assertContains(response, "data-interval=\"5000\"")
+        self.assertContains(response, "yarosh_website/js/hero-slider.js")
+        self.assertContains(response, 'loading="eager"')
+        self.assertContains(response, 'class="hero-slide is-active"')
+        self.assertContains(response, 'class="hero-slide"')
+        self.assertNotContains(response, inactive.image_url)
+        self.assertLess(rendered.index(first.image_url), rendered.index(second.image_url))
+
+    def test_hero_slides_are_registered_with_order_and_active_admin_controls(self):
+        hero_admin = admin.site._registry[HeroSlide]
+
+        self.assertIn("image_url", hero_admin.list_display)
+        self.assertIn("order", hero_admin.list_editable)
+        self.assertIn("is_active", hero_admin.list_editable)
+        self.assertEqual(hero_admin.ordering, ("order", "pk"))
+
     def test_homepage_renders_shared_layout_and_navigation(self):
         response = self.client.get(reverse("index"))
 
@@ -31,6 +106,10 @@ class HomePageTemplateTests(TestCase):
         self.assertLess(
             rendered.index('id="siteThemeToggleMobile"'),
             rendered.index('id="siteNavbar"'),
+        )
+        self.assertLess(
+            rendered.index('class="site-header"'),
+            rendered.index('class="hero-slider"'),
         )
 
     def test_login_navigation_opens_login_page(self):

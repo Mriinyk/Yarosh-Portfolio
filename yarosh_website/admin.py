@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.text import Truncator
 
-from .models import ContactRequest
+from .models import ContactRequest, HeroSlide
 
 User = get_user_model()
 
@@ -53,3 +53,21 @@ class ContactRequestAdmin(admin.ModelAdmin):
         del request
         for contact_request in queryset:
             contact_request.delete()
+
+
+@admin.register(HeroSlide)
+class HeroSlideAdmin(admin.ModelAdmin):
+    list_display = ("order", "image_preview", "image_url", "is_active")
+    list_display_links = ("image_preview",)
+    list_editable = ("order", "is_active")
+    list_filter = ("is_active",)
+    search_fields = ("image_url",)
+    ordering = ("order", "pk")
+
+    @admin.display(description="Попередній перегляд")
+    def image_preview(self, obj):
+        return format_html(
+            '<img src="{}" alt="" style="width: 120px; height: 68px; '
+            'object-fit: cover; border-radius: 4px;">',
+            obj.image_url,
+        )

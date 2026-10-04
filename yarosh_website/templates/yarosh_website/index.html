@@ -1,3 +1,30 @@
 {% extends 'yarosh_website/base.html' %}
+{% load static %}
 
-{% block content %}{% endblock %}
+{% block title %}Yarosh Oleksandra{% endblock %}
+{% block body_class %}home-site{% endblock %}
+
+{% block content %}
+<section class="hero-slider" aria-label="Фотографії Yarosh Oleksandra">
+    {% if slides %}
+        <div class="hero-slides" data-hero-slider data-interval="5000">
+            {% for slide in slides %}
+                <img
+                    class="hero-slide{% if forloop.first %} is-active{% endif %}"
+                    src="{{ slide.direct_image_url }}"
+                    alt="Фотографія Yarosh Oleksandra"
+                    {% if forloop.first %}fetchpriority="high"{% else %}loading="eager"{% endif %}
+                    {% if forloop.first %}aria-hidden="false"{% else %}aria-hidden="true"{% endif %}
+                >
+            {% endfor %}
+        </div>
+        <h1 class="hero-title">Yarosh Oleksandra</h1>
+    {% else %}
+        <div class="hero-empty" role="status">Поки немає слайдів</div>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'yarosh_website/js/hero-slider.js' %}" defer></script>
+{% endblock %}

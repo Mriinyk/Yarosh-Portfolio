@@ -8,10 +8,12 @@ from django.views.generic.edit import CreateView
 
 from .contact_services import send_telegram_notification
 from .forms import ContactForm, SiteAuthenticationForm, SiteUserCreationForm
+from .models import HeroSlide
 
 
 def index(request):
-    return render(request, 'yarosh_website/index.html')
+    slides = HeroSlide.objects.filter(is_active=True)
+    return render(request, "yarosh_website/index.html", {"slides": slides})
 
 
 def contact(request):
