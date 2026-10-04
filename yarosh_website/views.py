@@ -9,17 +9,22 @@ from django.views.generic.edit import CreateView
 
 from .contact_services import send_telegram_notification
 from .forms import ContactForm, SiteAuthenticationForm, SiteUserCreationForm
-from .models import HeroSlide, PhotoSession
+from .models import Biography, HeroSlide, PhotoSession
 from .photo_gallery import PhotoGalleryError, get_photo_session_images
 
 
 def index(request):
     slides = HeroSlide.objects.filter(is_active=True)
     photo_sessions = PhotoSession.objects.filter(is_active=True)
+    biography = Biography.objects.first()
     return render(
         request,
         "yarosh_website/index.html",
-        {"slides": slides, "photo_sessions": photo_sessions},
+        {
+            "slides": slides,
+            "photo_sessions": photo_sessions,
+            "biography": biography,
+        },
     )
 
 

@@ -63,6 +63,26 @@
     {% endif %}
 </section>
 
+{% if biography %}
+<section class="biography-section" id="biography" aria-labelledby="biographyTitle">
+    <div class="biography-heading">
+        <h2 id="biographyTitle">{{ biography.title }}</h2>
+    </div>
+    <div class="biography-layout">
+        <figure class="biography-photo">
+            {% if biography.photo %}
+                <img src="{{ biography.photo.url }}" alt="Фото Олександри Ярош" loading="lazy">
+            {% else %}
+                <img src="{% static 'yarosh_website/images/Biographical.jpg' %}" alt="Фото Олександри Ярош" loading="lazy">
+            {% endif %}
+        </figure>
+        <div class="biography-text">
+            {{ biography.text|linebreaks }}
+        </div>
+    </div>
+</section>
+{% endif %}
+
 <div class="photo-gallery-modal" data-photo-gallery-modal hidden
      role="dialog" aria-modal="true" aria-label="Галерея фотосесії" tabindex="-1">
     <button class="photo-gallery-close" type="button" data-gallery-close aria-label="Закрити галерею">

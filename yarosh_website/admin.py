@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.text import Truncator
 
-from .models import ContactRequest, HeroSlide, PhotoSession
+from .models import Biography, ContactRequest, HeroSlide, PhotoSession
 
 User = get_user_model()
 
@@ -88,4 +88,21 @@ class PhotoSessionAdmin(admin.ModelAdmin):
             '<img src="{}" alt="" style="width: 120px; height: 68px; '
             'object-fit: cover; border-radius: 4px;">',
             obj.direct_cover_url,
+        )
+
+
+@admin.register(Biography)
+class BiographyAdmin(admin.ModelAdmin):
+    list_display = ("title", "photo_preview")
+    search_fields = ("title", "text")
+    readonly_fields = ("photo_preview",)
+
+    @admin.display(description="Фото")
+    def photo_preview(self, obj):
+        if not obj.photo:
+            return "Стандартне зображення (Biographical.jpg)"
+        return format_html(
+            '<img src="{}" alt="" style="width: 120px; height: 68px; '
+            'object-fit: cover; border-radius: 8px;">',
+            obj.photo.url,
         )

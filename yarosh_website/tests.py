@@ -7,7 +7,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
 from .contact_services import send_telegram_notification
-from .models import ContactRequest, HeroSlide, PhotoSession
+from .models import Biography, ContactRequest, HeroSlide, PhotoSession
 
 
 class HomePageTemplateTests(TestCase):
@@ -157,6 +157,29 @@ class HomePageTemplateTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Незабаром тут з'являться нові фотосесії.")
+
+    def test_homepage_renders_biography_section_with_seeded_text(self):
+        response = self.client.get(reverse("index"))
+        rendered = response.content.decode()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="biography"')
+        self.assertContains(response, "Олександра Ярош")
+        self.assertContains(response, "yarosh_website/images/Biographical.jpg")
+        self.assertLess(
+            rendered.index('id="photosessions"'),
+            rendered.index('id="biography"'),
+        )
+
+    def test_homepage_biography_uses_uploaded_photo_when_present(self):
+        biography = Biography.objects.first()
+        biography.photo = "biography/custom.jpg"
+        biography.save(update_fields=["photo"])
+
+        response = self.client.get(reverse("index"))
+
+        self.assertContains(response, "biography/custom.jpg")
+        self.assertNotContains(response, "Biographical.jpg")
 
     def test_photo_session_cover_normalization_and_folder_id(self):
         photo_session = PhotoSession(

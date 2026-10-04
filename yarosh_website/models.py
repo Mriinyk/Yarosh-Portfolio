@@ -178,3 +178,32 @@ class PhotoSession(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Biography(models.Model):
+    title = models.CharField(
+        max_length=255,
+        default="ПРО МЕНЕ",
+        verbose_name="Заголовок",
+    )
+    text = models.TextField(
+        verbose_name="Текст біографії",
+        help_text="Розділяйте абзаци порожнім рядком.",
+    )
+    photo = models.ImageField(
+        upload_to="biography/",
+        blank=True,
+        verbose_name="Фото",
+        help_text=(
+            "Якщо фото не завантажено, використовується стандартне "
+            "зображення Biographical.jpg."
+        ),
+    )
+
+    class Meta:
+        verbose_name = "Biography"
+        verbose_name_plural = "Biography"
+        ordering = ["pk"]
+
+    def __str__(self):
+        return self.title
