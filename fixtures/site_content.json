@@ -1,0 +1,190 @@
+[
+{
+  "model": "yarosh_website.heroslide",
+  "pk": 1,
+  "fields": {
+    "image_url": "https://drive.google.com/file/d/1qi8-LdOYbc4qLcpubHX_lN60Se7HCmrS/view?usp=drive_link",
+    "order": 0,
+    "is_active": true
+  }
+},
+{
+  "model": "yarosh_website.heroslide",
+  "pk": 2,
+  "fields": {
+    "image_url": "https://drive.google.com/file/d/1SFs2_OC0AgHv_d9GrsusWRz28nEhaPZY/view?usp=drive_link",
+    "order": 1,
+    "is_active": true
+  }
+},
+{
+  "model": "yarosh_website.heroslide",
+  "pk": 3,
+  "fields": {
+    "image_url": "https://drive.google.com/file/d/1-70DFZmprWFmFMwFFWptwZu-L5dOHNdV/view?usp=drive_link",
+    "order": 2,
+    "is_active": true
+  }
+},
+{
+  "model": "yarosh_website.heroslide",
+  "pk": 4,
+  "fields": {
+    "image_url": "https://drive.google.com/file/d/1i7TUw415u5wH4PUOa4mivdn15DB7kxhh/view?usp=sharing",
+    "order": 3,
+    "is_active": true
+  }
+},
+{
+  "model": "yarosh_website.heroslide",
+  "pk": 5,
+  "fields": {
+    "image_url": "https://drive.google.com/file/d/17b2Ask6fvLH1CHhFQwp5bdR_F7MOzuDp/view?usp=drive_link",
+    "order": 4,
+    "is_active": true
+  }
+},
+{
+  "model": "yarosh_website.photosessiontype",
+  "pk": 1,
+  "fields": {
+    "name": "Портрети",
+    "search_name": "портрети",
+    "order": 1
+  }
+},
+{
+  "model": "yarosh_website.photosessiontype",
+  "pk": 2,
+  "fields": {
+    "name": "Тематичні фотосесії",
+    "search_name": "тематичні фотосесії",
+    "order": 2
+  }
+},
+{
+  "model": "yarosh_website.photosessiontype",
+  "pk": 3,
+  "fields": {
+    "name": "Заходи",
+    "search_name": "заходи",
+    "order": 3
+  }
+},
+{
+  "model": "yarosh_website.photosessiontype",
+  "pk": 4,
+  "fields": {
+    "name": "Корпоративні фотосесії",
+    "search_name": "корпоративні фотосесії",
+    "order": 4
+  }
+},
+{
+  "model": "yarosh_website.photosession",
+  "pk": 11,
+  "fields": {
+    "title": "Юлія Яковишина",
+    "search_title": "юлія яковишина",
+    "photo_type": 4,
+    "cover_url": "https://lh3.googleusercontent.com/d/17b2Ask6fvLH1CHhFQwp5bdR_F7MOzuDp",
+    "drive_folder_url": "https://drive.google.com/drive/folders/1fLoNBO2DP7XdeDt6OAuzSSOVpG94htxr?usp=drive_link",
+    "created_at": "2026-10-04T16:59:12.366Z",
+    "order": 0,
+    "is_active": true
+  }
+},
+{
+  "model": "yarosh_website.photosession",
+  "pk": 12,
+  "fields": {
+    "title": "Театр Саксаганського",
+    "search_title": "театр саксаганського",
+    "photo_type": null,
+    "cover_url": "https://lh3.googleusercontent.com/d/1CrnmpAxl5mV40-OF7wss8FPd0zEBxu3e",
+    "drive_folder_url": "https://drive.google.com/drive/folders/1ezHdlZW7Rtvfh4RMvWqHuRvHNmOMDtLq?usp=drive_link",
+    "created_at": "2026-10-04T17:00:40.795Z",
+    "order": 0,
+    "is_active": true
+  }
+},
+{
+  "model": "yarosh_website.photosession",
+  "pk": 13,
+  "fields": {
+    "title": "День Йоги Wake park",
+    "search_title": "день йоги wake park",
+    "photo_type": 3,
+    "cover_url": "https://lh3.googleusercontent.com/d/1qi8-LdOYbc4qLcpubHX_lN60Se7HCmrS",
+    "drive_folder_url": "https://drive.google.com/drive/folders/1rbnYl4ooU330PtwesQy6rY8ADRXLUIBw?usp=drive_link",
+    "created_at": "2026-10-04T17:01:52.646Z",
+    "order": 0,
+    "is_active": true
+  }
+},
+{
+  "model": "yarosh_website.photosession",
+  "pk": 14,
+  "fields": {
+    "title": "Магдалена",
+    "search_title": "магдалена",
+    "photo_type": 1,
+    "cover_url": "https://lh3.googleusercontent.com/d/1q_-J6wKTw5Zv5DNGh3aPAFL881_XLhfV",
+    "drive_folder_url": "https://drive.google.com/drive/folders/1n09liYeK3BY79fNBa9laAz2dIoVaUyyA?usp=drive_link",
+    "created_at": "2026-10-04T17:05:34.666Z",
+    "order": 0,
+    "is_active": true
+  }
+},
+{
+  "model": "yarosh_website.photosession",
+  "pk": 15,
+  "fields": {
+    "title": "Ретрит",
+    "search_title": "ретрит",
+    "photo_type": null,
+    "cover_url": "https://lh3.googleusercontent.com/d/1GfTEyLL1Y4M3gUf9itZXUWAZlE1Niuhu",
+    "drive_folder_url": "https://drive.google.com/drive/folders/1Z0Pi80E_xZQnGYKMNfxhLvDcyY9IPzrq?usp=drive_link",
+    "created_at": "2026-10-04T17:06:46.727Z",
+    "order": 0,
+    "is_active": true
+  }
+},
+{
+  "model": "yarosh_website.photosession",
+  "pk": 16,
+  "fields": {
+    "title": "Мото Рок Фест «Дорога до перемоги» 2026",
+    "search_title": "мото рок фест «дорога до перемоги» 2026",
+    "photo_type": 3,
+    "cover_url": "https://lh3.googleusercontent.com/d/1EXkiLQ6FOFdBCcFxCjZGBqggiAwh7lAU",
+    "drive_folder_url": "https://drive.google.com/drive/folders/17XMe5Ov2tXjhU-m91_zuVCTOQFDHbwqS?usp=drive_link",
+    "created_at": "2026-10-04T17:16:45.171Z",
+    "order": 0,
+    "is_active": true
+  }
+},
+{
+  "model": "yarosh_website.photosession",
+  "pk": 17,
+  "fields": {
+    "title": "Angel",
+    "search_title": "angel",
+    "photo_type": 2,
+    "cover_url": "https://lh3.googleusercontent.com/d/1LUgvKz1l3d3xphw84b7rRcr4F9th_yXU",
+    "drive_folder_url": "https://drive.google.com/drive/folders/1uJXI_rxgobNgX1cGEdo9QerrFM9Na-Hj?usp=drive_link",
+    "created_at": "2026-10-04T17:17:50.593Z",
+    "order": 0,
+    "is_active": true
+  }
+},
+{
+  "model": "yarosh_website.biography",
+  "pk": 1,
+  "fields": {
+    "title": "ПРО МЕНЕ",
+    "text": "Мене звати Олександра Ярош, і я - професійна фотографка\n\nВзаємодіючи зі світом, я завжди прагнула почути, розгадати та пізнати людей глибше. Це спонукало мене досліджувати мистецтво фотографії, де я можу перетворити своє бачення на візуальну історію, зупиняючи найцінніші моменти у кадрі\n\nДля мене фотографія - це завжди про людину та атмосферу\nТому кожна наша співпраця будується не лише на моєму професійному досвіді, але й на стовідсотковій залученості, щирій увазі та бажанні показати вашу справжність",
+    "photo": ""
+  }
+}
+]

@@ -1,6 +1,8 @@
 from datetime import timedelta
 from unittest.mock import Mock, patch
 
+from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -375,6 +377,31 @@ class HomePageTemplateTests(TestCase):
             photo_admin.fields,
             ("title", "photo_type", "cover_url", "drive_folder_url"),
         )
+
+
+class SiteContentRestoreTests(TestCase):
+    def test_restore_command_loads_public_fixture_into_a_new_database(self):
+        self.assertFalse(HeroSlide.objects.exists())
+        self.assertFalse(PhotoSession.objects.exists())
+
+        call_command("restore_site_content", verbosity=0)
+
+        self.assertEqual(HeroSlide.objects.count(), 5)
+        self.assertEqual(PhotoSessionType.objects.count(), 4)
+        self.assertEqual(PhotoSession.objects.count(), 7)
+        self.assertEqual(Biography.objects.count(), 1)
+        self.assertEqual(PhotoSession.objects.get(pk=17).title, "Angel")
+
+    def test_restore_command_refuses_to_overwrite_existing_site_content(self):
+        HeroSlide.objects.create(
+            image_url="https://images.example.com/existing.jpg",
+        )
+
+        with self.assertRaises(CommandError):
+            call_command("restore_site_content", verbosity=0)
+
+        self.assertEqual(HeroSlide.objects.count(), 1)
+        self.assertFalse(PhotoSession.objects.exists())
 
 
 class AuthenticationFlowTests(TestCase):

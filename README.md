@@ -30,6 +30,26 @@ Django's default user model, back up the database, then run:
 For a new database, run `manage.py migrate` normally; do not run the adoption
 command.
 
+## Restoring public site content
+
+The portable public-content snapshot is stored in
+`fixtures/site_content.json`. After cloning the repository and applying
+migrations to a new database, restore it with:
+
+```powershell
+.\venv\Scripts\python.exe manage.py migrate
+.\venv\Scripts\python.exe manage.py restore_site_content
+.\venv\Scripts\python.exe manage.py createsuperuser
+```
+
+The restore command imports hero slides, photo-session types and sessions, and
+the biography. It refuses to run if hero slides or photo sessions already
+exist, so it will not overwrite content in a populated database. User accounts,
+contact-form submissions, likes, comments, shares, and visitor statistics are
+intentionally excluded from the portable fixture. Uploaded media files are
+stored separately from the database and must be transferred separately if
+used.
+
 ## Photo sessions and site statistics
 
 Manage photo-session types and sessions in Django admin. The public
