@@ -23,8 +23,74 @@
         <div class="hero-empty" role="status">Поки немає слайдів</div>
     {% endif %}
 </section>
+
+<section class="photo-sessions-section" id="photosessions" aria-labelledby="photoSessionsTitle">
+    <div class="photo-sessions-heading">
+        <h2 id="photoSessionsTitle">НОВІ ФОТОСЕСІЇ</h2>
+    </div>
+    {% if photo_sessions %}
+        <div class="photo-sessions-carousel-wrap">
+            <div class="photo-sessions-carousel is-measuring" data-session-carousel tabindex="0"
+                 aria-label="Карусель нових фотосесій">
+                {% for photo_session in photo_sessions %}
+                    <article class="photo-session-card" data-session-card
+                             data-session-id="{{ photo_session.pk }}">
+                        <button class="photo-session-cover" type="button"
+                                data-gallery-url="{% url 'photo_session_gallery' photo_session.pk %}"
+                                aria-label="Відкрити альбом: {{ photo_session.title }}">
+                            <img src="{{ photo_session.direct_cover_url }}"
+                                 alt="Обкладинка фотосесії {{ photo_session.title }}"
+                                 decoding="async"
+                                 loading="eager">
+                            <span class="photo-session-album-icon" aria-hidden="true">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+                                    <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.7"/>
+                                    <circle cx="8.5" cy="9" r="1.5" fill="currentColor"/>
+                                    <path d="m5 17 4.2-4.2a1.2 1.2 0 0 1 1.7 0l1.6 1.6 2.2-2.2a1.2 1.2 0 0 1 1.7 0L20 16.8" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"/>
+                                </svg>
+                            </span>
+                        </button>
+                        <h3>{{ photo_session.title }}</h3>
+                    </article>
+                {% endfor %}
+            </div>
+        </div>
+        <noscript>
+            <style>.photo-sessions-carousel.is-measuring { visibility: visible; }</style>
+        </noscript>
+    {% else %}
+        <p class="photo-sessions-empty">Незабаром тут з'являться нові фотосесії.</p>
+    {% endif %}
+</section>
+
+<div class="photo-gallery-modal" data-photo-gallery-modal hidden
+     role="dialog" aria-modal="true" aria-label="Галерея фотосесії" tabindex="-1">
+    <button class="photo-gallery-close" type="button" data-gallery-close aria-label="Закрити галерею">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m7 7 10 10M17 7 7 17"></path>
+        </svg>
+    </button>
+    <p class="photo-gallery-counter" data-gallery-counter aria-live="polite"></p>
+    <p class="photo-gallery-status" data-gallery-status role="status"></p>
+    <div class="photo-gallery-viewer">
+        <button class="photo-gallery-nav photo-gallery-previous" type="button"
+                data-gallery-previous aria-label="Попереднє фото">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m14.5 5-7 7 7 7"></path>
+            </svg>
+        </button>
+        <img data-gallery-image alt="Фото з фотосесії" hidden>
+        <button class="photo-gallery-nav photo-gallery-next" type="button"
+                data-gallery-next aria-label="Наступне фото">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m9.5 5 7 7-7 7"></path>
+            </svg>
+        </button>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
     <script src="{% static 'yarosh_website/js/hero-slider.js' %}" defer></script>
+    <script src="{% static 'yarosh_website/js/photo-sessions.js' %}" defer></script>
 {% endblock %}

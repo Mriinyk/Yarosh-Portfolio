@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.text import Truncator
 
-from .models import ContactRequest, HeroSlide
+from .models import ContactRequest, HeroSlide, PhotoSession
 
 User = get_user_model()
 
@@ -70,4 +70,22 @@ class HeroSlideAdmin(admin.ModelAdmin):
             '<img src="{}" alt="" style="width: 120px; height: 68px; '
             'object-fit: cover; border-radius: 4px;">',
             obj.image_url,
+        )
+
+
+@admin.register(PhotoSession)
+class PhotoSessionAdmin(admin.ModelAdmin):
+    list_display = ("order", "title", "cover_preview", "is_active")
+    list_display_links = ("title",)
+    list_editable = ("order", "is_active")
+    list_filter = ("is_active",)
+    search_fields = ("title", "cover_url", "drive_folder_url")
+    ordering = ("order", "pk")
+
+    @admin.display(description="Обкладинка")
+    def cover_preview(self, obj):
+        return format_html(
+            '<img src="{}" alt="" style="width: 120px; height: 68px; '
+            'object-fit: cover; border-radius: 4px;">',
+            obj.direct_cover_url,
         )

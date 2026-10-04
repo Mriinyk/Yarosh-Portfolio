@@ -6,6 +6,11 @@ urlpatterns = [
     path("", views.index, name="index"),
     path("contact/", views.contact, name="contact"),
     path(
+        "photo-sessions/<int:pk>/gallery/",
+        views.photo_session_gallery,
+        name="photo_session_gallery",
+    ),
+    path(
         "accounts/login/",
         views.SiteLoginView.as_view(),
         name="login",

@@ -123,3 +123,58 @@ class HeroSlide(models.Model):
 
     def __str__(self):
         return f"Слайд {self.order}: {self.image_url}"
+
+
+class PhotoSession(models.Model):
+    title = models.CharField(max_length=255, verbose_name="Назва фотосесії")
+    cover_url = models.URLField(
+        max_length=2048,
+        verbose_name="Посилання на обкладинку",
+        help_text="Підтримується пряме посилання або посилання Google Drive на файл.",
+    )
+    drive_folder_url = models.URLField(
+        max_length=2048,
+        verbose_name="Посилання на папку Google Drive",
+        help_text="Папка має бути доступна всім, хто має посилання.",
+    )
+    order = models.PositiveSmallIntegerField(
+        default=0,
+        verbose_name="Порядок показу",
+        help_text="Менше число — раніше відображення.",
+    )
+    is_active = models.BooleanField(default=True, verbose_name="Активна")
+
+    class Meta:
+        verbose_name = "New Photoshoots"
+        verbose_name_plural = "New Photoshoots"
+        ordering = ["order", "pk"]
+
+    @staticmethod
+    def normalize_google_drive_url(url):
+        cleaned = url.strip()
+        if "lh3.googleusercontent.com" in cleaned:
+            return cleaned
+
+        match = re.search(r"/d/([A-Za-z0-9_-]+)", cleaned)
+        if not match:
+            match = re.search(r"[?&]id=([A-Za-z0-9_-]+)", cleaned)
+        if match:
+            return f"https://lh3.googleusercontent.com/d/{match.group(1)}"
+        return cleaned
+
+    @property
+    def direct_cover_url(self):
+        return self.normalize_google_drive_url(self.cover_url)
+
+    def get_drive_folder_id(self):
+        match = re.search(r"/folders/([A-Za-z0-9_-]+)", self.drive_folder_url)
+        if not match:
+            match = re.search(r"[?&]id=([A-Za-z0-9_-]+)", self.drive_folder_url)
+        return match.group(1) if match else None
+
+    def save(self, *args, **kwargs):
+        self.cover_url = self.normalize_google_drive_url(self.cover_url)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.title

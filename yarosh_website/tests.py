@@ -7,7 +7,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
 from .contact_services import send_telegram_notification
-from .models import ContactRequest, HeroSlide
+from .models import ContactRequest, HeroSlide, PhotoSession
 
 
 class HomePageTemplateTests(TestCase):
@@ -116,6 +116,196 @@ class HomePageTemplateTests(TestCase):
         response = self.client.get(reverse("index"))
 
         self.assertContains(response, f'href="{reverse("login")}?next=/')
+
+
+    def test_homepage_renders_active_photo_sessions_in_order(self):
+        later = PhotoSession.objects.create(
+            title="Пізніша фотосесія",
+            cover_url="https://images.example.com/later.jpg",
+            drive_folder_url="https://drive.google.com/drive/folders/later-id",
+            order=2,
+        )
+        PhotoSession.objects.create(
+            title="Прихована фотосесія",
+            cover_url="https://images.example.com/hidden.jpg",
+            drive_folder_url="https://drive.google.com/drive/folders/hidden-id",
+            order=0,
+            is_active=False,
+        )
+        earlier = PhotoSession.objects.create(
+            title="Раніша фотосесія",
+            cover_url="https://drive.google.com/file/d/cover-id/view",
+            drive_folder_url="https://drive.google.com/drive/folders/earlier-id",
+            order=1,
+        )
+
+        response = self.client.get(reverse("index"))
+        rendered = response.content.decode()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "НОВІ ФОТОСЕСІЇ")
+        self.assertContains(response, 'id="photosessions"')
+        self.assertContains(response, "photo-sessions.js")
+        self.assertNotContains(response, "data-carousel-direction")
+        self.assertContains(response, "Відкрити альбом: Раніша фотосесія")
+        self.assertContains(response, 'src="https://lh3.googleusercontent.com/d/cover-id"')
+        self.assertNotContains(response, "Прихована фотосесія")
+        self.assertLess(rendered.index(earlier.title), rendered.index(later.title))
+
+    def test_homepage_shows_empty_photo_sessions_message(self):
+        response = self.client.get(reverse("index"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Незабаром тут з'являться нові фотосесії.")
+
+    def test_photo_session_cover_normalization_and_folder_id(self):
+        photo_session = PhotoSession(
+            title="Портрет",
+            cover_url="https://drive.google.com/open?id=cover-file-id",
+            drive_folder_url="https://drive.google.com/drive/folders/folder-id",
+        )
+
+        self.assertEqual(
+            photo_session.direct_cover_url,
+            "https://lh3.googleusercontent.com/d/cover-file-id",
+        )
+        self.assertEqual(photo_session.get_drive_folder_id(), "folder-id")
+
+    def test_photo_session_gallery_endpoint_returns_cover_and_folder_images(self):
+        from django.core.cache import cache
+
+        cache.clear()
+        photo_session = PhotoSession.objects.create(
+            title="Портрет",
+            cover_url="https://drive.google.com/file/d/cover-file-id/view",
+            drive_folder_url="https://drive.google.com/drive/folders/folder-id",
+        )
+        response_from_drive = Mock()
+        response_from_drive.text = (
+            '<tr data-selectable="true" data-id="cover-file-id">'
+            '<td data-tooltip="cover.jpg"></td></tr>'
+            '<tr data-selectable="true" data-id="gallery-file-id">'
+            '<td data-tooltip="gallery.jpeg"></td></tr>'
+            '<tr data-selectable="true" data-id="not-an-image">'
+            '<td data-tooltip="document.pdf"></td></tr>'
+        )
+        response_from_drive.raise_for_status.return_value = None
+
+        with patch(
+            "yarosh_website.photo_gallery.requests.get",
+            return_value=response_from_drive,
+        ) as drive_get:
+            response = self.client.get(
+                reverse("photo_session_gallery", args=[photo_session.pk])
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json()["images"],
+            [
+                "https://lh3.googleusercontent.com/d/cover-file-id",
+                "https://lh3.googleusercontent.com/d/gallery-file-id",
+            ],
+        )
+        drive_get.assert_called_once()
+
+    def test_gallery_parser_handles_drive_markup_variants_and_more_image_types(self):
+        from .photo_gallery import _extract_image_file_ids
+
+        folder_html = (
+            "<table><tr data-selectable data-id='root-file-id'>"
+            "<td data-id='nested-preview-id' "
+            "data-tooltip='IMG_5697.jpg&quot; Image'></td>"
+            "<td aria-label='IMG_5697.jpg Image Shared'></td></tr></table>"
+            "<div data-id='standalone-id' "
+            "aria-label='preview.avif'></div>"
+            "<div data-id='document-id' "
+            "data-tooltip='document.pdf'></div>"
+        )
+
+        self.assertEqual(
+            _extract_image_file_ids(folder_html),
+            ["root-file-id", "standalone-id"],
+        )
+
+    def test_photo_session_gallery_endpoint_reports_invalid_folder_link(self):
+        photo_session = PhotoSession.objects.create(
+            title="Портрет",
+            cover_url="https://images.example.com/cover.jpg",
+            drive_folder_url="https://drive.google.com/drive/my-drive",
+        )
+
+        response = self.client.get(
+            reverse("photo_session_gallery", args=[photo_session.pk])
+        )
+
+        self.assertEqual(response.status_code, 502)
+        self.assertIn("error", response.json())
+
+    def test_photo_session_gallery_endpoint_reports_empty_or_unavailable_folder(self):
+        from django.core.cache import cache
+
+        cache.clear()
+        photo_session = PhotoSession.objects.create(
+            title="Портрет",
+            cover_url="https://images.example.com/cover.jpg",
+            drive_folder_url="https://drive.google.com/drive/folders/empty-id",
+        )
+        response_from_drive = Mock()
+        response_from_drive.text = "<html>Sign in to Google Drive</html>"
+        response_from_drive.raise_for_status.return_value = None
+
+        with patch(
+            "yarosh_website.photo_gallery.requests.get",
+            return_value=response_from_drive,
+        ):
+            response = self.client.get(
+                reverse("photo_session_gallery", args=[photo_session.pk])
+            )
+
+        self.assertEqual(response.status_code, 502)
+        self.assertIn("error", response.json())
+
+    def test_photo_session_gallery_endpoint_rejects_cached_empty_folder(self):
+        from django.core.cache import cache
+
+        photo_session = PhotoSession.objects.create(
+            title="Портрет",
+            cover_url="https://images.example.com/cover.jpg",
+            drive_folder_url="https://drive.google.com/drive/folders/cached-empty-id",
+        )
+        cache.set("photo-session-gallery:cached-empty-id", [], 60)
+
+        with patch("yarosh_website.photo_gallery.requests.get") as drive_get:
+            response = self.client.get(
+                reverse("photo_session_gallery", args=[photo_session.pk])
+            )
+
+        self.assertEqual(response.status_code, 502)
+        self.assertIn("error", response.json())
+        drive_get.assert_not_called()
+
+    def test_inactive_photo_session_gallery_is_not_public(self):
+        photo_session = PhotoSession.objects.create(
+            title="Архів",
+            cover_url="https://images.example.com/cover.jpg",
+            drive_folder_url="https://drive.google.com/drive/folders/archive-id",
+            is_active=False,
+        )
+
+        response = self.client.get(
+            reverse("photo_session_gallery", args=[photo_session.pk])
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_photo_sessions_are_registered_with_order_and_active_admin_controls(self):
+        photo_admin = admin.site._registry[PhotoSession]
+
+        self.assertIn("title", photo_admin.list_display)
+        self.assertIn("order", photo_admin.list_editable)
+        self.assertIn("is_active", photo_admin.list_editable)
+        self.assertEqual(photo_admin.ordering, ("order", "pk"))
 
 
 class AuthenticationFlowTests(TestCase):
