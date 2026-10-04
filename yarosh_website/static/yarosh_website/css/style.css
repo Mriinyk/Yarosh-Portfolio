@@ -494,6 +494,140 @@ html[data-theme="dark"] .auth-link {
     color: #76f568;
 }
 
+.contact-card {
+    width: min(100%, 35rem);
+}
+
+.contact-form {
+    display: grid;
+    gap: 1.15rem;
+}
+
+.contact-method-field {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.contact-method-options {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.contact-method-option {
+    position: relative;
+}
+
+.contact-method-option input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
+.contact-method-option label {
+    display: inline-flex;
+    min-width: 8rem;
+    min-height: 2.9rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0.65rem 1.15rem;
+    border: 1px solid var(--auth-border);
+    border-radius: 0.85rem;
+    background: var(--auth-input);
+    color: var(--nav-ink);
+    cursor: pointer;
+    transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.contact-method-option input:checked + label {
+    border-color: rgba(38, 232, 14, 0.82);
+    background: rgba(38, 232, 14, 0.12);
+    box-shadow: 0 0 0.8rem rgba(38, 232, 14, 0.2);
+}
+
+.contact-method-option input:focus-visible + label,
+.contact-method-option label:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 0.85rem rgba(38, 232, 14, 0.26);
+}
+
+.contact-form input[type="text"],
+.contact-form textarea {
+    display: block;
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid var(--auth-border);
+    border-radius: 0.75rem;
+    outline: 0;
+    background: var(--auth-input);
+    color: var(--nav-ink);
+    transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.contact-form textarea {
+    min-height: 8rem;
+    resize: vertical;
+}
+
+.contact-form input:focus,
+.contact-form textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 0.2rem rgba(38, 232, 14, 0.18);
+}
+
+.contact-form input::placeholder,
+.contact-form textarea::placeholder {
+    color: var(--auth-muted);
+}
+
+.contact-messages {
+    display: flex;
+    min-height: 3.75rem;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.45rem;
+}
+
+.contact-message {
+    width: 100%;
+    margin: 0;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid var(--auth-border);
+    border-radius: 0.75rem;
+    background: var(--auth-input);
+    color: var(--nav-ink);
+    text-align: center;
+    animation: contact-message-fade-in 420ms ease-out both;
+}
+
+.contact-message + .contact-message {
+    margin-top: 0.5rem;
+}
+
+.contact-message-success {
+    border-color: rgba(38, 232, 14, 0.55);
+}
+
+.contact-message-error {
+    border-color: rgba(197, 34, 34, 0.55);
+}
+
+@keyframes contact-message-fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
 @media (min-width: 768px) {
     .site-navbar {
         padding-right: 1.15rem;
@@ -643,7 +777,8 @@ html[data-theme="dark"] .auth-link {
 
 @media (prefers-reduced-motion: reduce) {
     .auth-card,
-    .auth-card::before {
+    .auth-card::before,
+    .contact-message {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
     }

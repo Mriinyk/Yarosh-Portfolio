@@ -59,7 +59,8 @@
                        href="{% url 'index' %}#photosessions"{% if request.resolver_match.url_name == 'photosessions' %} aria-current="page"{% endif %}>Фотосесії</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link site-nav-link" href="{% url 'index' %}#contact">Зв'язатися</a>
+                    <a class="nav-link site-nav-link{% if request.resolver_match.url_name == 'contact' %} is-active{% endif %}"
+                       href="{% url 'contact' %}"{% if request.resolver_match.url_name == 'contact' %} aria-current="page"{% endif %}>Зв'язатися</a>
                 </li>
                 <li class="nav-item">
                     <button class="nav-link site-nav-link site-theme-toggle site-theme-toggle-desktop" id="siteThemeToggle" type="button"

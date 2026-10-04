@@ -1,0 +1,71 @@
+{% extends 'yarosh_website/base.html' %}
+{% load static %}
+
+{% block title %}Зв'язатися | Yarosh Portfolio{% endblock %}
+{% block body_class %}auth-site{% endblock %}
+
+{% block content %}
+<section class="auth-page contact-page" aria-labelledby="contactTitle">
+    <div class="auth-card contact-card">
+        <div class="auth-heading">
+            <a class="auth-logo-link" href="{% url 'index' %}" aria-label="Yarosh Portfolio — головна">
+                <img class="auth-logo" src="{% static 'yarosh_website/images/logo.png' %}" alt="Логотип Yarosh Portfolio">
+            </a>
+            <h1 class="auth-title" id="contactTitle">Зв'язатися</h1>
+            <p class="auth-intro">Залиште повідомлення, і я зв'яжуся з вами.</p>
+        </div>
+
+        <div class="contact-messages" aria-live="polite">
+            {% for message in messages %}
+                <p class="contact-message contact-message-{{ message.tags }}">{{ message }}</p>
+            {% endfor %}
+        </div>
+
+        <form method="post" class="contact-form">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="auth-errors" role="alert">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <fieldset class="contact-method-field">
+                <legend class="auth-label">{{ form.contact_method.label }}</legend>
+                <div class="contact-method-options">
+                    {% for radio in form.contact_method %}
+                        <div class="contact-method-option">
+                            {{ radio.tag }}
+                            <label for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                        </div>
+                    {% endfor %}
+                </div>
+                {% for error in form.contact_method.errors %}
+                    <p class="auth-field-error">{{ error }}</p>
+                {% endfor %}
+            </fieldset>
+
+            <div class="auth-field">
+                <label class="auth-label" for="{{ form.social_username.id_for_label }}" id="dynamic_username_label">
+                    {{ form.social_username.label }}
+                </label>
+                {{ form.social_username }}
+                {% for error in form.social_username.errors %}
+                    <p class="auth-field-error">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <div class="auth-field">
+                <label class="auth-label" for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
+                {{ form.message }}
+                {% for error in form.message.errors %}
+                    <p class="auth-field-error">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <button class="auth-submit" type="submit">Надіслати повідомлення</button>
+        </form>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'yarosh_website/js/contact.js' %}" defer></script>
+{% endblock %}

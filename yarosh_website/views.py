@@ -1,15 +1,36 @@
 from django.contrib.auth import login
 from django.contrib.auth.views import LoginView, LogoutView
-from django.shortcuts import render
+from django.contrib import messages
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic.edit import CreateView
 
-from .forms import SiteAuthenticationForm, SiteUserCreationForm
+from .contact_services import send_telegram_notification
+from .forms import ContactForm, SiteAuthenticationForm, SiteUserCreationForm
 
 
 def index(request):
     return render(request, 'yarosh_website/index.html')
+
+
+def contact(request):
+    if request.method == "POST":
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            contact_request = form.save()
+            if send_telegram_notification(contact_request):
+                messages.success(request, "Дякуємо! Ваше повідомлення надіслано.")
+            else:
+                messages.error(
+                    request,
+                    "Повідомлення збережено, але сповіщення не вдалося надіслати.",
+                )
+            return redirect("contact")
+    else:
+        form = ContactForm()
+
+    return render(request, "yarosh_website/contact.html", {"form": form})
 
 
 class SiteLoginView(LoginView):
