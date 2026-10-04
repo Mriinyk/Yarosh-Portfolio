@@ -6,7 +6,16 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.text import Truncator
 
-from .models import Biography, ContactRequest, HeroSlide, PhotoSession
+from .models import (
+    Biography,
+    ContactRequest,
+    HeroSlide,
+    PhotoSession,
+    PhotoSessionComment,
+    PhotoSessionLike,
+    PhotoSessionShare,
+    PhotoSessionType,
+)
 
 User = get_user_model()
 
@@ -75,12 +84,13 @@ class HeroSlideAdmin(admin.ModelAdmin):
 
 @admin.register(PhotoSession)
 class PhotoSessionAdmin(admin.ModelAdmin):
-    list_display = ("order", "title", "cover_preview", "is_active")
+    fields = ("title", "photo_type", "cover_url", "drive_folder_url")
+    list_display = ("title", "photo_type", "cover_preview", "created_at")
     list_display_links = ("title",)
-    list_editable = ("order", "is_active")
-    list_filter = ("is_active",)
-    search_fields = ("title", "cover_url", "drive_folder_url")
-    ordering = ("order", "pk")
+    list_filter = ("photo_type",)
+    search_fields = ("title", "photo_type__name", "cover_url", "drive_folder_url")
+    readonly_fields = ("created_at",)
+    ordering = ("-created_at", "-pk")
 
     @admin.display(description="Обкладинка")
     def cover_preview(self, obj):
@@ -89,6 +99,51 @@ class PhotoSessionAdmin(admin.ModelAdmin):
             'object-fit: cover; border-radius: 4px;">',
             obj.direct_cover_url,
         )
+
+    def save_model(self, request, obj, form, change):
+        del request, form, change
+        obj.is_active = True
+        obj.save()
+
+
+@admin.register(PhotoSessionType)
+class PhotoSessionTypeAdmin(admin.ModelAdmin):
+    list_display = ("name", "order")
+    list_editable = ("order",)
+    search_fields = ("name",)
+    ordering = ("order", "name")
+
+
+@admin.register(PhotoSessionLike)
+class PhotoSessionLikeAdmin(admin.ModelAdmin):
+    list_display = ("photo_session", "user", "created_at")
+    list_filter = ("created_at",)
+    search_fields = ("photo_session__title", "user__username")
+    readonly_fields = ("created_at",)
+
+
+@admin.register(PhotoSessionComment)
+class PhotoSessionCommentAdmin(admin.ModelAdmin):
+    list_display = ("photo_session", "user", "created_at", "comment_preview")
+    list_filter = ("created_at",)
+    search_fields = ("photo_session__title", "user__username", "text")
+    readonly_fields = ("created_at",)
+
+    @admin.display(description="Коментар")
+    def comment_preview(self, obj):
+        return Truncator(obj.text).chars(80)
+
+
+@admin.register(PhotoSessionShare)
+class PhotoSessionShareAdmin(admin.ModelAdmin):
+    list_display = ("photo_session", "user", "visitor", "created_at")
+    list_filter = ("created_at",)
+    search_fields = ("photo_session__title", "user__username")
+    readonly_fields = ("photo_session", "user", "visitor", "created_at")
+
+    def has_add_permission(self, request):
+        del request
+        return False
 
 
 @admin.register(Biography)

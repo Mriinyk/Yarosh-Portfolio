@@ -1,9 +1,12 @@
 import re
+import uuid
 
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
+from django.conf import settings
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
+from django.utils import timezone
 
 from .contact_services import delete_telegram_notification
 
@@ -125,8 +128,54 @@ class HeroSlide(models.Model):
         return f"Слайд {self.order}: {self.image_url}"
 
 
+class PhotoSessionType(models.Model):
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+        verbose_name="Тип фотосесії",
+    )
+    search_name = models.CharField(
+        max_length=100,
+        db_index=True,
+        default="",
+        editable=False,
+    )
+    order = models.PositiveSmallIntegerField(
+        default=0,
+        verbose_name="Порядок показу",
+    )
+
+    class Meta:
+        verbose_name = "Photo session type"
+        verbose_name_plural = "Photo session types"
+        ordering = ["order", "name"]
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        self.search_name = self.name.casefold()
+        if kwargs.get("update_fields") is not None:
+            kwargs["update_fields"] = set(kwargs["update_fields"]) | {"search_name"}
+        super().save(*args, **kwargs)
+
+
 class PhotoSession(models.Model):
     title = models.CharField(max_length=255, verbose_name="Назва фотосесії")
+    search_title = models.CharField(
+        max_length=255,
+        db_index=True,
+        default="",
+        editable=False,
+    )
+    photo_type = models.ForeignKey(
+        PhotoSessionType,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="photo_sessions",
+        verbose_name="Тип фотосесії",
+    )
     cover_url = models.URLField(
         max_length=2048,
         verbose_name="Посилання на обкладинку",
@@ -137,17 +186,29 @@ class PhotoSession(models.Model):
         verbose_name="Посилання на папку Google Drive",
         help_text="Папка має бути доступна всім, хто має посилання.",
     )
+    created_at = models.DateTimeField(
+        default=timezone.now,
+        editable=False,
+        verbose_name="Дата публікації",
+    )
     order = models.PositiveSmallIntegerField(
         default=0,
         verbose_name="Порядок показу",
         help_text="Менше число — раніше відображення.",
     )
     is_active = models.BooleanField(default=True, verbose_name="Активна")
+    likes = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        through="PhotoSessionLike",
+        related_name="liked_photo_sessions",
+        blank=True,
+        verbose_name="Вподобання",
+    )
 
     class Meta:
         verbose_name = "New Photoshoots"
         verbose_name_plural = "New Photoshoots"
-        ordering = ["order", "pk"]
+        ordering = ["-created_at", "-pk"]
 
     @staticmethod
     def normalize_google_drive_url(url):
@@ -173,11 +234,124 @@ class PhotoSession(models.Model):
         return match.group(1) if match else None
 
     def save(self, *args, **kwargs):
+        self.search_title = self.title.casefold()
         self.cover_url = self.normalize_google_drive_url(self.cover_url)
+        if kwargs.get("update_fields") is not None:
+            kwargs["update_fields"] = set(kwargs["update_fields"]) | {
+                "cover_url",
+                "search_title",
+            }
         super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
+
+
+class PhotoSessionLike(models.Model):
+    photo_session = models.ForeignKey(
+        PhotoSession,
+        on_delete=models.CASCADE,
+        related_name="like_records",
+        verbose_name="Фотосесія",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="photo_session_like_records",
+        verbose_name="Користувач",
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата")
+
+    class Meta:
+        verbose_name = "Photo session like"
+        verbose_name_plural = "Photo session likes"
+        constraints = [
+            models.UniqueConstraint(
+                fields=("photo_session", "user"),
+                name="unique_photo_session_like",
+            )
+        ]
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user}: {self.photo_session}"
+
+
+class PhotoSessionComment(models.Model):
+    photo_session = models.ForeignKey(
+        PhotoSession,
+        on_delete=models.CASCADE,
+        related_name="comments",
+        verbose_name="Фотосесія",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="photo_session_comments",
+        verbose_name="Автор",
+    )
+    text = models.TextField(max_length=2000, verbose_name="Коментар")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата")
+
+    class Meta:
+        verbose_name = "Photo session comment"
+        verbose_name_plural = "Photo session comments"
+        ordering = ["created_at"]
+
+    def __str__(self):
+        return f"{self.user}: {self.photo_session}"
+
+
+class SiteVisitor(models.Model):
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        verbose_name="Ідентифікатор",
+    )
+    first_seen = models.DateTimeField(auto_now_add=True, verbose_name="Перший візит")
+
+    class Meta:
+        verbose_name = "Унікальний відвідувач"
+        verbose_name_plural = "Унікальні відвідувачі"
+        ordering = ["-first_seen"]
+
+    def __str__(self):
+        return str(self.id)
+
+
+class PhotoSessionShare(models.Model):
+    photo_session = models.ForeignKey(
+        PhotoSession,
+        on_delete=models.CASCADE,
+        related_name="shares",
+        verbose_name="Фотосесія",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="photo_session_shares",
+        verbose_name="Користувач",
+    )
+    visitor = models.ForeignKey(
+        SiteVisitor,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="photo_session_shares",
+        verbose_name="Пристрій",
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата")
+
+    class Meta:
+        verbose_name = "Photo session share"
+        verbose_name_plural = "Photo session shares"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.photo_session} — {self.created_at:%d.%m.%Y %H:%M}"
 
 
 class Biography(models.Model):

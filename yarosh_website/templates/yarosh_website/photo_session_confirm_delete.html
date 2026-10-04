@@ -1,0 +1,19 @@
+{% extends 'yarosh_website/base.html' %}
+
+{% block title %}Видалити фотосесію — Yarosh Oleksandra{% endblock %}
+{% block body_class %}photos-page-site{% endblock %}
+
+{% block content %}
+<section class="photo-editor-page" aria-labelledby="deletePhotoTitle">
+    <div class="photo-editor-card photo-delete-card">
+        <p class="photos-page-eyebrow">АДМІНІСТРУВАННЯ</p>
+        <h1 id="deletePhotoTitle">Видалити фотосесію?</h1>
+        <p>Ви впевнені, що хочете видалити «{{ photo_session.title }}»? Цю дію неможливо скасувати.</p>
+        <form method="post" class="photo-editor-actions">
+            {% csrf_token %}
+            <a href="{% url 'photos' %}">Скасувати</a>
+            <button type="submit">Так, видалити</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

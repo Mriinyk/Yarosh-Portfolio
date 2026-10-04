@@ -29,3 +29,18 @@ Django's default user model, back up the database, then run:
 
 For a new database, run `manage.py migrate` normally; do not run the adoption
 command.
+
+## Photo sessions and site statistics
+
+Manage photo-session types and sessions in Django admin. The public
+`/photos/` page supports title/type search, database-backed type filters,
+pagination (nine sessions per page), galleries, likes, comments, and share
+tracking. Superusers can also add, edit, and delete sessions from that page.
+Create custom types in the “Photo session types” admin section or from the
+session editor's “Add a new type” option.
+
+The footer shows the number of photo sessions and unique browser profiles.
+Unique visitors are counted once using a signed, first-party, one-year cookie;
+the counter is refreshed in the browser every 15 seconds. Clearing cookies or
+using another browser profile will be counted as a new visitor. No IP address
+or browser fingerprint is stored for this counter.

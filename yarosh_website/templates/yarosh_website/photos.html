@@ -1,0 +1,247 @@
+{% extends 'yarosh_website/base.html' %}
+{% load static %}
+
+{% block title %}Фотосесії — Yarosh Oleksandra{% endblock %}
+{% block body_class %}photos-page-site{% endblock %}
+
+{% block content %}
+<section class="photos-page" aria-label="Каталог фотосесій">
+    <header class="photos-page-heading">
+        <h1 class="visually-hidden">Фотосесії</h1>
+        <form class="photos-search" method="get" action="{% url 'photos' %}" role="search">
+            {% if selected_type %}
+                <input type="hidden" name="type" value="{{ selected_type }}">
+            {% endif %}
+            <label class="visually-hidden" for="photoSearch">Пошук фотосесій</label>
+            <input id="photoSearch" type="search" name="q" value="{{ search_query }}"
+                   placeholder="Пошук фотосесій..." autocomplete="off">
+            <button type="submit" aria-label="Шукати фотосесії">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="10.8" cy="10.8" r="6.8"></circle>
+                    <path d="m16 16 4.5 4.5"></path>
+                </svg>
+            </button>
+        </form>
+
+        <nav class="photo-type-nav" aria-label="Фільтр за типом фотосесії">
+            <a class="photo-type-link{% if not selected_type %} is-active{% endif %}"
+               href="{% url 'photos' %}{% if search_query %}?q={{ search_query|urlencode }}{% endif %}"
+               {% if not selected_type %}aria-current="page"{% endif %}>Усі</a>
+            {% for photo_type in photo_types %}
+                <a class="photo-type-link{% if selected_type == photo_type.pk|stringformat:'s' %} is-active{% endif %}"
+                   href="{% url 'photos' %}?type={{ photo_type.pk }}{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}"
+                   {% if selected_type == photo_type.pk|stringformat:'s' %}aria-current="page"{% endif %}>
+                    {{ photo_type.name }}
+                </a>
+            {% endfor %}
+            {% if has_uncategorized %}
+                <a class="photo-type-link{% if selected_type == 'none' %} is-active{% endif %}"
+                   href="{% url 'photos' %}?type=none{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}"
+                   {% if selected_type == 'none' %}aria-current="page"{% endif %}>Без категорії</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    {% if user.is_superuser %}
+        <a class="photo-admin-add" href="{% url 'photo_session_create' %}" aria-label="Додати фотосесію"
+           title="Додати фотосесію">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 5v14M5 12h14"></path>
+            </svg>
+        </a>
+    {% endif %}
+
+    <div class="photo-session-grid">
+        {% for photo_session in photo_sessions %}
+            <article class="photo-work-card" id="photoshoot-{{ photo_session.pk }}">
+                <button class="photo-work-cover" type="button"
+                        data-gallery-url="{% url 'photo_session_gallery' photo_session.pk %}"
+                        aria-label="Відкрити альбом: {{ photo_session.title }}">
+                    <img src="{{ photo_session.direct_cover_url }}"
+                         alt="Обкладинка фотосесії {{ photo_session.title }}"
+                         loading="lazy" decoding="async">
+                    <span class="photo-work-cover-overlay" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+                            <circle cx="8.5" cy="9" r="1.5"></circle>
+                            <path d="m5 17 4.2-4.2a1.2 1.2 0 0 1 1.7 0l1.6 1.6 2.2-2.2a1.2 1.2 0 0 1 1.7 0L20 16.8"></path>
+                        </svg>
+                    </span>
+                </button>
+
+                <div class="photo-work-details">
+                    <span class="photo-work-type">{{ photo_session.photo_type.name|default:"Без категорії" }}</span>
+                    <h2>{{ photo_session.title }}</h2>
+
+                    <div class="photo-work-actions" aria-label="Дії з фотосесією">
+                        {% if user.is_authenticated %}
+                            <button class="photo-action-button{% if photo_session.pk in liked_session_ids %} is-liked{% endif %}"
+                                    type="button" data-photo-like
+                                    data-action-url="{% url 'photo_session_like' photo_session.pk %}"
+                                    aria-label="Вподобати фотосесію"
+                                    aria-pressed="{% if photo_session.pk in liked_session_ids %}true{% else %}false{% endif %}">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M20.8 4.8a5.5 5.5 0 0 0-7.8 0L12 5.9l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.3 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"></path>
+                                </svg>
+                                <span data-like-count>{{ photo_session.likes_count }}</span>
+                            </button>
+                        {% else %}
+                            <a class="photo-action-button"
+                               href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}"
+                               aria-label="Увійдіть, щоб вподобати фотосесію">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M20.8 4.8a5.5 5.5 0 0 0-7.8 0L12 5.9l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.3 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"></path>
+                                </svg>
+                                <span>{{ photo_session.likes_count }}</span>
+                            </a>
+                        {% endif %}
+
+                        <button class="photo-action-button" type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#photoComments-{{ photo_session.pk }}"
+                                aria-expanded="false"
+                                aria-controls="photoComments-{{ photo_session.pk }}">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8A8.5 8.5 0 0 1 8.7 3.9a8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z"></path>
+                            </svg>
+                            <span data-comment-count>{{ photo_session.comments_count }}</span>
+                        </button>
+
+                        <button class="photo-action-button" type="button"
+                                data-bs-toggle="modal"
+                                data-bs-target="#photoShare-{{ photo_session.pk }}"
+                                aria-label="Поділитися фотосесією">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="18" cy="5" r="3"></circle>
+                                <circle cx="6" cy="12" r="3"></circle>
+                                <circle cx="18" cy="19" r="3"></circle>
+                                <path d="m8.7 10.7 6.6-4.4m-6.6 7 6.6 4"></path>
+                            </svg>
+                            <span data-share-count>{{ photo_session.shares_count }}</span>
+                        </button>
+                    </div>
+
+                    {% if user.is_superuser %}
+                        <div class="photo-admin-actions">
+                            <a href="{% url 'photo_session_update' photo_session.pk %}">Оновити</a>
+                            <a href="{% url 'photo_session_delete' photo_session.pk %}">Видалити</a>
+                        </div>
+                    {% endif %}
+
+                    <div class="collapse photo-comments" id="photoComments-{{ photo_session.pk }}">
+                        {% if user.is_authenticated %}
+                            <form class="photo-comment-form" method="post"
+                                  action="{% url 'photo_session_comment' photo_session.pk %}"
+                                  data-comment-form>
+                                {% csrf_token %}
+                                <label for="photoComment-{{ photo_session.pk }}">Коментар від {{ user.username }}</label>
+                                <textarea id="photoComment-{{ photo_session.pk }}" name="text"
+                                          maxlength="2000" rows="2"
+                                          placeholder="Залишіть коментар..." required></textarea>
+                                <button type="submit">Опублікувати</button>
+                            </form>
+                        {% else %}
+                            <p class="photo-comments-login">Увійдіть, щоб залишити коментар.</p>
+                        {% endif %}
+                        <div class="photo-comments-list" data-comments-list>
+                            {% for comment in photo_session.comments.all %}
+                                <article class="photo-comment">
+                                    <div>
+                                        <strong>{{ comment.user.username }}</strong>
+                                        <time datetime="{{ comment.created_at|date:'c' }}">{{ comment.created_at|date:"d.m.Y H:i" }}</time>
+                                    </div>
+                                    <p>{{ comment.text }}</p>
+                                </article>
+                            {% empty %}
+                                <p class="photo-comments-empty">Коментарів поки немає.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+            </article>
+        {% empty %}
+            <p class="photo-grid-empty">
+                {% if search_query or selected_type %}За цими параметрами фотосесій не знайдено.{% else %}Фотосесій поки немає.{% endif %}
+            </p>
+        {% endfor %}
+    </div>
+
+    {% for photo_session in photo_sessions %}
+        <div class="modal fade photo-share-modal" id="photoShare-{{ photo_session.pk }}"
+             tabindex="-1" aria-labelledby="photoShareTitle-{{ photo_session.pk }}"
+             aria-hidden="true"
+             data-session-id="{{ photo_session.pk }}"
+             data-share-endpoint="{% url 'photo_session_share' photo_session.pk %}">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="photo-share-heading">
+                        <h2 id="photoShareTitle-{{ photo_session.pk }}">Поділитися фотосесією</h2>
+                        <button type="button" data-bs-dismiss="modal" aria-label="Закрити">×</button>
+                    </div>
+                    <p>{{ photo_session.title }}</p>
+                    <div class="photo-share-links">
+                        <a href="https://t.me/share/url?url={{ request.scheme }}%3A%2F%2F{{ request.get_host|urlencode }}{% url 'photos' %}%23photoshoot-{{ photo_session.pk }}"
+                           target="_blank" rel="noopener noreferrer" data-share-link
+                           aria-label="Поділитися через Telegram" title="Telegram">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M21.6 4.2 18.4 19c-.2 1-0.8 1.2-1.6.8l-4.4-3.2-2.1 2c-.2.2-.4.4-.8.4l.3-4.5 8.2-7.4c.4-.3-.1-.5-.6-.2L7.3 13.3 3 12c-.9-.3-.9-.9.2-1.3L20 4.2c.8-.3 1.8.2 1.6 0Z"></path>
+                            </svg>
+                        </a>
+                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.scheme }}%3A%2F%2F{{ request.get_host|urlencode }}{% url 'photos' %}%23photoshoot-{{ photo_session.pk }}"
+                           target="_blank" rel="noopener noreferrer" data-share-link
+                           aria-label="Поділитися через Facebook" title="Facebook">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M14 8h3V4h-3c-3.3 0-5 2-5 5v2H6v4h3v5h4v-5h3l1-4h-4V9c0-.7.3-1 1-1Z"></path>
+                            </svg>
+                        </a>
+                        <a href="https://api.whatsapp.com/send?text={{ request.scheme }}%3A%2F%2F{{ request.get_host|urlencode }}{% url 'photos' %}%23photoshoot-{{ photo_session.pk }}"
+                           target="_blank" rel="noopener noreferrer" data-share-link
+                           aria-label="Поділитися через WhatsApp" title="WhatsApp">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M20.5 11.7a8.4 8.4 0 0 1-12.4 7.4L3 20l.9-5A8.4 8.4 0 1 1 20.5 11.7Z"></path>
+                                <path d="M8.3 7.7c.2-.4.4-.4.7-.4h.5c.2 0 .4.1.5.4l.7 1.7c.1.2.1.4-.1.6l-.5.6c-.2.2-.2.4 0 .6.4.7 1.2 1.5 2 1.9.2.1.4.1.6-.1l.7-.8c.2-.2.4-.2.6-.1l1.6.8c.3.1.4.3.4.5s-.1 1-.7 1.4-1.2.5-1.8.3c-.7-.2-1.6-.6-2.7-1.5-1.3-1-2.1-2.2-2.3-3-.2-.8-.1-1.6.1-2 .2-.4.5-.7.7-.9Z"></path>
+                            </svg>
+                        </a>
+                    </div>
+                    <div class="photo-share-copy">
+                        <input type="text" readonly
+                               value="{{ request.scheme }}://{{ request.get_host }}{% url 'photos' %}#photoshoot-{{ photo_session.pk }}"
+                               aria-label="Посилання на фотосесію">
+                        <button type="button" data-copy-share
+                                data-share-url="{{ request.scheme }}://{{ request.get_host }}{% url 'photos' %}#photoshoot-{{ photo_session.pk }}">
+                            Копіювати посилання
+                        </button>
+                    </div>
+                    <p class="photo-share-status" data-share-status role="status"></p>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+    {% if page_obj.has_other_pages %}
+        <nav class="photo-pagination" aria-label="Сторінки фотосесій">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}{% if selected_type %}&amp;type={{ selected_type }}{% endif %}"
+                   aria-label="Попередня сторінка">‹</a>
+            {% endif %}
+            {% for page_number in page_obj.paginator.page_range %}
+                {% if page_obj.number == page_number %}
+                    <span aria-current="page">{{ page_number }}</span>
+                {% elif page_number > page_obj.number|add:"-3" and page_number < page_obj.number|add:"3" %}
+                    <a href="?page={{ page_number }}{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}{% if selected_type %}&amp;type={{ selected_type }}{% endif %}">{{ page_number }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}{% if selected_type %}&amp;type={{ selected_type }}{% endif %}"
+                   aria-label="Наступна сторінка">›</a>
+            {% endif %}
+        </nav>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'yarosh_website/js/photo-sessions.js' %}" defer></script>
+    <script src="{% static 'yarosh_website/js/photo-interactions.js' %}" defer></script>
+{% endblock %}

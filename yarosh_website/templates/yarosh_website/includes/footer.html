@@ -1,0 +1,15 @@
+<footer class="site-footer">
+    <div class="site-footer-panel">
+        <div class="site-footer-stats" data-site-stats data-stats-url="{% url 'site_stats' %}">
+            <div class="site-footer-stat">
+                <span class="site-footer-stat-number" data-visits-count>{{ visits_count|default:"0" }}</span>
+                <span class="site-footer-stat-label">Унікальні відвідувачі</span>
+            </div>
+            <div class="site-footer-stat">
+                <span class="site-footer-stat-number" data-photos-count>{{ photos_count|default:"0" }}</span>
+                <span class="site-footer-stat-label">Фотосесії</span>
+            </div>
+        </div>
+        <p class="site-footer-copy">&copy; {% now "Y" %} Yarosh Oleksandra. Усі права захищені.</p>
+    </div>
+</footer>

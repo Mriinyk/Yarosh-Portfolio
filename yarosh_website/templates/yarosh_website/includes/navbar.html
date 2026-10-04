@@ -55,8 +55,8 @@
                        href="{% url 'index' %}"{% if request.resolver_match.url_name == 'index' %} aria-current="page"{% endif %}>Головна</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link site-nav-link{% if request.resolver_match.url_name == 'photosessions' %} is-active{% endif %}"
-                       href="{% url 'index' %}#photosessions"{% if request.resolver_match.url_name == 'photosessions' %} aria-current="page"{% endif %}>Фотосесії</a>
+                    <a class="nav-link site-nav-link{% if request.resolver_match.url_name == 'photos' %} is-active{% endif %}"
+                       href="{% url 'photos' %}"{% if request.resolver_match.url_name == 'photos' %} aria-current="page"{% endif %}>Фотосесії</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link site-nav-link{% if request.resolver_match.url_name == 'contact' %} is-active{% endif %}"

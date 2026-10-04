@@ -1,0 +1,35 @@
+{% extends 'yarosh_website/base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} — Yarosh Oleksandra{% endblock %}
+{% block body_class %}photos-page-site{% endblock %}
+
+{% block content %}
+<section class="photo-editor-page" aria-labelledby="photoEditorTitle">
+    <div class="photo-editor-card">
+        <p class="photos-page-eyebrow">АДМІНІСТРУВАННЯ</p>
+        <h1 id="photoEditorTitle">{{ page_title }}</h1>
+        <form method="post" class="photo-editor-form">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="photo-editor-field{% if field.name == 'new_category' %} photo-new-category-field{% endif %}"
+                     {% if field.name == 'new_category' %}data-new-category-field hidden{% endif %}>
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+                    {% for error in field.errors %}<span class="photo-form-error">{{ error }}</span>{% endfor %}
+                </div>
+            {% endfor %}
+            {% for error in form.non_field_errors %}<p class="photo-form-error">{{ error }}</p>{% endfor %}
+            <div class="photo-editor-actions">
+                <a href="{% url 'photos' %}">Скасувати</a>
+                <button type="submit">Зберегти фотосесію</button>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'yarosh_website/js/photo-interactions.js' %}" defer></script>
+{% endblock %}

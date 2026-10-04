@@ -7,7 +7,17 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
 from .contact_services import send_telegram_notification
-from .models import Biography, ContactRequest, HeroSlide, PhotoSession
+from .models import (
+    Biography,
+    ContactRequest,
+    HeroSlide,
+    PhotoSession,
+    PhotoSessionComment,
+    PhotoSessionLike,
+    PhotoSessionShare,
+    PhotoSessionType,
+    SiteVisitor,
+)
 
 
 class HomePageTemplateTests(TestCase):
@@ -322,13 +332,17 @@ class HomePageTemplateTests(TestCase):
 
         self.assertEqual(response.status_code, 404)
 
-    def test_photo_sessions_are_registered_with_order_and_active_admin_controls(self):
+    def test_photo_sessions_are_registered_without_manual_order_or_activation(self):
         photo_admin = admin.site._registry[PhotoSession]
 
         self.assertIn("title", photo_admin.list_display)
-        self.assertIn("order", photo_admin.list_editable)
-        self.assertIn("is_active", photo_admin.list_editable)
-        self.assertEqual(photo_admin.ordering, ("order", "pk"))
+        self.assertNotIn("order", photo_admin.list_display)
+        self.assertNotIn("is_active", photo_admin.list_display)
+        self.assertEqual(photo_admin.ordering, ("-created_at", "-pk"))
+        self.assertEqual(
+            photo_admin.fields,
+            ("title", "photo_type", "cover_url", "drive_folder_url"),
+        )
 
 
 class AuthenticationFlowTests(TestCase):
@@ -630,3 +644,283 @@ class ContactFlowTests(TestCase):
             contact_admin.list_display.index("created_at"),
             contact_admin.list_display.index("message_preview") + 1,
         )
+
+
+class PhotoSessionPageTests(TestCase):
+    def setUp(self):
+        self.photo_type = PhotoSessionType.objects.get(name="Портрети")
+        self.photo_session = PhotoSession.objects.create(
+            title="Літній портрет",
+            photo_type=self.photo_type,
+            cover_url="https://images.example.com/portrait.jpg",
+            drive_folder_url="https://drive.google.com/drive/folders/portrait",
+        )
+
+    def test_navbar_photo_link_opens_the_paginated_photo_page(self):
+        home = self.client.get(reverse("index"))
+        photos = self.client.get(reverse("photos"))
+
+        self.assertContains(home, f'href="{reverse("photos")}">Фотосесії</a>')
+        self.assertEqual(photos.status_code, 200)
+        self.assertIn("csrftoken", photos.cookies)
+        self.assertContains(photos, "Літній портрет")
+        self.assertContains(photos, "Портрети")
+        self.assertContains(photos, 'data-gallery-url=')
+
+    def test_photo_page_filters_by_type_and_search_term(self):
+        other_type = PhotoSessionType.objects.get(name="Заходи")
+        PhotoSession.objects.create(
+            title="Корпоратив",
+            photo_type=other_type,
+            cover_url="https://images.example.com/event.jpg",
+            drive_folder_url="https://drive.google.com/drive/folders/event",
+        )
+
+        by_type = self.client.get(
+            reverse("photos"),
+            {"type": self.photo_type.pk},
+        )
+        by_search = self.client.get(reverse("photos"), {"q": "літній"})
+
+        self.assertEqual(
+            [session.title for session in by_type.context["photo_sessions"]],
+            ["Літній портрет"],
+        )
+        self.assertEqual(
+            [session.title for session in by_search.context["photo_sessions"]],
+            ["Літній портрет"],
+        )
+
+    def test_uncategorized_sessions_can_be_filtered_for_legacy_content(self):
+        uncategorized = PhotoSession.objects.create(
+            title="Стара фотосесія",
+            cover_url="https://images.example.com/legacy.jpg",
+            drive_folder_url="https://drive.google.com/drive/folders/legacy",
+        )
+
+        response = self.client.get(reverse("photos"), {"type": "none"})
+
+        self.assertEqual(
+            [session.pk for session in response.context["photo_sessions"]],
+            [uncategorized.pk],
+        )
+        self.assertContains(response, "Без категорії")
+
+    def test_photo_page_shows_nine_sessions_per_page_and_preserves_filters(self):
+        for index in range(9):
+            PhotoSession.objects.create(
+                title=f"Портрет {index}",
+                photo_type=self.photo_type,
+                cover_url=f"https://images.example.com/portrait-{index}.jpg",
+                drive_folder_url=f"https://drive.google.com/drive/folders/p-{index}",
+            )
+
+        response = self.client.get(
+            reverse("photos"),
+            {"q": "Портрет", "type": self.photo_type.pk},
+        )
+
+        self.assertEqual(len(response.context["photo_sessions"]), 9)
+        self.assertTrue(response.context["page_obj"].has_next())
+        self.assertContains(response, "page=2")
+        self.assertContains(response, f"type={self.photo_type.pk}")
+
+    def test_photo_sessions_are_ordered_newest_first(self):
+        older = PhotoSession.objects.create(
+            title="Стара фотосесія",
+            photo_type=self.photo_type,
+            cover_url="https://images.example.com/older.jpg",
+            drive_folder_url="https://drive.google.com/drive/folders/older",
+        )
+        newer = PhotoSession.objects.create(
+            title="Нова фотосесія",
+            photo_type=self.photo_type,
+            cover_url="https://images.example.com/newer.jpg",
+            drive_folder_url="https://drive.google.com/drive/folders/newer",
+        )
+
+        response = self.client.get(reverse("photos"))
+
+        ordered_ids = [
+            session.pk for session in response.context["photo_sessions"]
+        ]
+        self.assertLess(ordered_ids.index(newer.pk), ordered_ids.index(older.pk))
+        self.assertEqual(PhotoSession._meta.ordering, ["-created_at", "-pk"])
+
+    def test_photo_form_has_category_choices_but_no_order_or_active_controls(self):
+        self.client.force_login(
+            get_user_model().objects.create_superuser(
+                username="form-admin",
+                password="Safe-password-123",
+                email="form-admin@example.com",
+            )
+        )
+        response = self.client.get(reverse("photo_session_create"))
+
+        self.assertContains(response, "Без категорії")
+        self.assertContains(response, "Додати нову категорію")
+        self.assertContains(response, 'data-new-category-field hidden')
+        self.assertNotContains(response, "Порядок показу")
+        self.assertNotContains(response, "Активна")
+        self.assertNotContains(response, "Новий тип")
+        self.assertNotIn("order", response.context["form"].fields)
+        self.assertNotIn("is_active", response.context["form"].fields)
+
+    def test_superuser_can_create_session_with_a_new_category_or_no_category(self):
+        administrator = get_user_model().objects.create_superuser(
+            username="photo-admin",
+            password="Safe-password-123",
+            email="photo-admin@example.com",
+        )
+        self.client.force_login(administrator)
+
+        response = self.client.post(
+            reverse("photo_session_create"),
+            {
+                "title": "Нова тематична зйомка",
+                "photo_type": "__new__",
+                "new_category": "Казкові образи",
+                "cover_url": "https://images.example.com/fairy.jpg",
+                "drive_folder_url": "https://drive.google.com/drive/folders/fairy",
+            },
+        )
+
+        new_type = PhotoSessionType.objects.get(name="Казкові образи")
+        created = PhotoSession.objects.get(title="Нова тематична зйомка")
+        self.assertRedirects(response, reverse("photos"))
+        self.assertEqual(created.photo_type, new_type)
+        self.assertTrue(created.is_active)
+        self.assertContains(self.client.get(reverse("photos")), "Казкові образи")
+
+        uncategorized_response = self.client.post(
+            reverse("photo_session_create"),
+            {
+                "title": "Фотосесія без категорії",
+                "photo_type": "",
+                "new_category": "",
+                "cover_url": "https://images.example.com/uncategorized.jpg",
+                "drive_folder_url": "https://drive.google.com/drive/folders/uncategorized",
+            },
+        )
+
+        uncategorized = PhotoSession.objects.get(title="Фотосесія без категорії")
+        self.assertRedirects(uncategorized_response, reverse("photos"))
+        self.assertIsNone(uncategorized.photo_type)
+        self.assertTrue(uncategorized.is_active)
+
+    def test_non_superuser_cannot_open_photo_session_editor(self):
+        viewer = get_user_model().objects.create_user(
+            username="photo-viewer",
+            password="Safe-password-123",
+        )
+        self.client.force_login(viewer)
+
+        response = self.client.get(
+            reverse("photo_session_update", args=[self.photo_session.pk])
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_superuser_can_update_and_delete_a_photo_session(self):
+        administrator = get_user_model().objects.create_superuser(
+            username="photo-editor",
+            password="Safe-password-123",
+            email="photo-editor@example.com",
+        )
+        self.client.force_login(administrator)
+        update_response = self.client.post(
+            reverse("photo_session_update", args=[self.photo_session.pk]),
+            {
+                "title": "Оновлений портрет",
+                "photo_type": str(self.photo_type.pk),
+                "new_category": "",
+                "cover_url": "https://images.example.com/updated.jpg",
+                "drive_folder_url": "https://drive.google.com/drive/folders/updated",
+            },
+        )
+
+        self.assertRedirects(update_response, reverse("photos"))
+        self.photo_session.refresh_from_db()
+        self.assertEqual(self.photo_session.title, "Оновлений портрет")
+
+        delete_response = self.client.post(
+            reverse("photo_session_delete", args=[self.photo_session.pk])
+        )
+        self.assertRedirects(delete_response, reverse("photos"))
+        self.assertFalse(PhotoSession.objects.filter(pk=self.photo_session.pk).exists())
+
+    def test_authenticated_like_can_be_toggled_and_is_admin_registered(self):
+        viewer = get_user_model().objects.create_user(
+            username="photo-liker",
+            password="Safe-password-123",
+        )
+        self.client.force_login(viewer)
+        url = reverse("photo_session_like", args=[self.photo_session.pk])
+
+        first = self.client.post(url)
+        second = self.client.post(url)
+
+        self.assertEqual(first.json(), {"liked": True, "likes_count": 1})
+        self.assertEqual(second.json(), {"liked": False, "likes_count": 0})
+        self.assertEqual(PhotoSessionLike.objects.count(), 0)
+        self.assertIn(PhotoSessionLike, admin.site._registry)
+
+    def test_authenticated_comment_is_created_and_registered_in_admin(self):
+        viewer = get_user_model().objects.create_user(
+            username="photo-commenter",
+            password="Safe-password-123",
+        )
+        self.client.force_login(viewer)
+
+        response = self.client.post(
+            reverse("photo_session_comment", args=[self.photo_session.pk]),
+            {"text": "Чудове фото!"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["comment_count"], 1)
+        self.assertTrue(
+            PhotoSessionComment.objects.filter(
+                photo_session=self.photo_session,
+                user=viewer,
+                text="Чудове фото!",
+            ).exists()
+        )
+        self.assertIn(PhotoSessionComment, admin.site._registry)
+
+    def test_share_action_is_recorded_for_anonymous_visitors(self):
+        self.client.get(reverse("photos"))
+
+        response = self.client.post(
+            reverse("photo_session_share", args=[self.photo_session.pk])
+        )
+
+        share = PhotoSessionShare.objects.get()
+        self.assertEqual(response.json(), {"shares_count": 1})
+        self.assertIsNotNone(share.visitor)
+        self.assertIn(PhotoSessionShare, admin.site._registry)
+
+
+class UniqueVisitorCounterTests(TestCase):
+    def test_unique_device_is_counted_once_across_pages_and_stats_refresh(self):
+        first_page = self.client.get(reverse("index"))
+        self.assertEqual(SiteVisitor.objects.count(), 1)
+        self.assertIn("yarosh_visitor", first_page.cookies)
+
+        self.client.get(reverse("photos"))
+        stats = self.client.get(reverse("site_stats"))
+
+        self.assertEqual(SiteVisitor.objects.count(), 1)
+        self.assertEqual(stats.json()["visits"], 1)
+        self.assertEqual(stats.json()["photo_sessions"], 0)
+
+        another_device = self.client_class()
+        another_device.get(reverse("contact"))
+        self.assertEqual(SiteVisitor.objects.count(), 2)
+
+    def test_footer_is_shared_and_excludes_the_video_counter(self):
+        response = self.client.get(reverse("contact"))
+
+        self.assertContains(response, "Унікальні відвідувачі")
+        self.assertContains(response, "Фотосесії")
+        self.assertNotContains(response, "Кількість відеоробіт")
