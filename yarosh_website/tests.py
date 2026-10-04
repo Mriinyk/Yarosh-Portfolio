@@ -1,6 +1,8 @@
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
+from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
 
 
 class HomePageTemplateTests(TestCase):
@@ -114,3 +116,10 @@ class AuthenticationFlowTests(TestCase):
         homepage = self.client.get(reverse("index"))
         self.assertContains(homepage, "Увійти")
         self.assertNotContains(homepage, "existing-user")
+
+    def test_custom_user_model_is_registered_with_django_user_admin(self):
+        user_model = get_user_model()
+
+        self.assertEqual(user_model._meta.label, "yarosh_website.User")
+        self.assertEqual(user_model._meta.db_table, "auth_user")
+        self.assertIsInstance(admin.site._registry[user_model], UserAdmin)
