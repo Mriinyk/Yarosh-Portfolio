@@ -1812,6 +1812,9 @@ html[data-theme="dark"] .auth-link {
     justify-content: center;
     gap: clamp(1rem, 3vw, 2rem);
     margin-top: 0.55rem;
+}
+
+.photo-work-actions.has-admin-divider {
     border-bottom: 1px solid var(--auth-border);
 }
 
@@ -2504,8 +2507,8 @@ html[data-theme="dark"] .photo-work-card:not(.is-gallery-dismissed):focus-within
 
 .photo-share-links a svg {
     display: block;
-    width: 1.8rem;
-    height: 1.8rem;
+    width: 1.45rem;
+    height: 1.45rem;
     fill: currentColor;
 }
 
@@ -2519,8 +2522,8 @@ html[data-theme="dark"] .photo-work-card:not(.is-gallery-dismissed):focus-within
 }
 
 .photo-share-links a[aria-label*="Facebook"] svg {
-    width: 1.58rem;
-    height: 1.58rem;
+    width: 1.45rem;
+    height: 1.45rem;
 }
 
 .photo-share-copy button {

@@ -73,7 +73,8 @@
                     <span class="photo-work-type">{{ photo_session.photo_type.name|default:"Без категорії" }}</span>
                     <h2>{{ photo_session.title }}</h2>
 
-                    <div class="photo-work-actions" aria-label="Дії з фотосесією">
+                    <div class="photo-work-actions{% if user.is_superuser %} has-admin-divider{% endif %}"
+                         aria-label="Дії з фотосесією">
                         {% if user.is_authenticated %}
                             <button class="photo-action-button{% if photo_session.pk in liked_session_ids %} is-liked{% endif %}"
                                     type="button" data-photo-like

@@ -698,6 +698,23 @@ class PhotoSessionPageTests(TestCase):
         self.assertContains(photos, "Літній портрет")
         self.assertContains(photos, "Портрети")
         self.assertContains(photos, 'data-gallery-url=')
+        self.assertNotContains(photos, "has-admin-divider")
+
+    def test_photo_action_divider_is_only_shown_to_superusers(self):
+        response = self.client.get(reverse("photos"))
+        self.assertNotContains(response, "has-admin-divider")
+        self.assertNotContains(response, "photo-admin-actions")
+
+        administrator = get_user_model().objects.create_superuser(
+            username="photo-divider-admin",
+            password="test-password",
+            email="photo-divider-admin@example.com",
+        )
+        self.client.force_login(administrator)
+
+        response = self.client.get(reverse("photos"))
+        self.assertContains(response, "has-admin-divider")
+        self.assertContains(response, "photo-admin-actions")
 
     def test_photo_page_filters_by_type_and_search_term(self):
         other_type = PhotoSessionType.objects.get(name="Заходи")
