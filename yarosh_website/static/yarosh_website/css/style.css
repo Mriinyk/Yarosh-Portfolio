@@ -1382,12 +1382,17 @@ html[data-theme="dark"] .auth-link {
         opacity: 0;
         pointer-events: none;
         box-shadow: 0 0 0.45rem 2px rgba(38, 232, 14, 0.92), 0 0 1.1rem 5px rgba(38, 232, 14, 0.68);
-        transition: opacity 180ms ease;
+        -webkit-clip-path: inset(-2rem -2rem 0 -2rem);
+        clip-path: inset(-2rem -2rem 0 -2rem);
+        transform: scaleX(0);
+        transform-origin: center;
+        transition: opacity 180ms ease, transform 220ms ease;
     }
 
     .site-nav-link:hover::after,
     .site-nav-link:focus-visible::after {
         opacity: 1;
+        transform: scaleX(1);
     }
 }
 
@@ -1652,8 +1657,10 @@ html[data-theme="dark"] .auth-link {
     left: 0;
     height: 2px;
     background: var(--accent);
-    box-shadow: 0 0 0.7rem rgba(38, 232, 14, 0.7);
+    box-shadow: 0 0 0.45rem 2px rgba(38, 232, 14, 0.92), 0 0 1.1rem 5px rgba(38, 232, 14, 0.68);
     content: "";
+    -webkit-clip-path: inset(-2rem -2rem 0 -2rem);
+    clip-path: inset(-2rem -2rem 0 -2rem);
     transform: scaleX(0);
     transform-origin: center;
     transition: transform 220ms ease;
