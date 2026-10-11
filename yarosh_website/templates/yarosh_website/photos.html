@@ -78,6 +78,8 @@
                             <button class="photo-action-button{% if photo_session.pk in liked_session_ids %} is-liked{% endif %}"
                                     type="button" data-photo-like
                                     data-action-url="{% url 'photo_session_like' photo_session.pk %}"
+                                    data-login-url="{% url 'login' %}?next={{ request.get_full_path|urlencode }}"
+                                    data-signup-url="{% url 'signup' %}?next={{ request.get_full_path|urlencode }}"
                                     aria-label="Вподобати фотосесію"
                                     aria-pressed="{% if photo_session.pk in liked_session_ids %}true{% else %}false{% endif %}">
                                 <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -88,6 +90,9 @@
                         {% else %}
                             <a class="photo-action-button"
                                href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}"
+                               data-auth-hint
+                               data-signup-url="{% url 'signup' %}?next={{ request.get_full_path|urlencode }}"
+                               title="Потрібно зареєструватися, щоб вподобати фотосесію"
                                aria-label="Увійдіть, щоб вподобати фотосесію">
                                 <svg viewBox="0 0 24 24" aria-hidden="true">
                                     <path d="M20.8 4.8a5.5 5.5 0 0 0-7.8 0L12 5.9l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.3 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"></path>
@@ -99,6 +104,7 @@
                         <button class="photo-action-button" type="button"
                                 data-bs-toggle="collapse"
                                 data-bs-target="#photoComments-{{ photo_session.pk }}"
+                                {% if not user.is_authenticated %}title="Щоб залишити коментар, зареєструйтеся на сайті"{% endif %}
                                 aria-expanded="false"
                                 aria-controls="photoComments-{{ photo_session.pk }}">
                             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -141,7 +147,11 @@
                                 <button type="submit">Опублікувати</button>
                             </form>
                         {% else %}
-                            <p class="photo-comments-login">Увійдіть, щоб залишити коментар.</p>
+                            <p class="photo-comments-login">
+                                <a href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}">Увійдіть</a> або
+                                <a href="{% url 'signup' %}?next={{ request.get_full_path|urlencode }}">зареєструйтеся</a>,
+                                щоб залишити коментар.
+                            </p>
                         {% endif %}
                         <div class="photo-comments-list" data-comments-list>
                             {% for comment in photo_session.root_comments %}

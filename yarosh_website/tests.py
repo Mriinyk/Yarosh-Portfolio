@@ -1036,6 +1036,25 @@ class PhotoSessionPageTests(TestCase):
         self.assertIsNotNone(share.visitor)
         self.assertIn(PhotoSessionShare, admin.site._registry)
 
+    def test_anonymous_users_see_registration_hints_for_likes_and_comments(self):
+        response = self.client.get(reverse("photos"))
+
+        self.assertContains(response, "data-auth-hint")
+        self.assertContains(response, "data-signup-url")
+        self.assertContains(response, "Потрібно зареєструватися")
+        self.assertContains(response, f'{reverse("signup")}?next=')
+        self.assertContains(response, "зареєструйтеся")
+
+        viewer = get_user_model().objects.create_user(
+            username="hint-viewer",
+            password="Safe-password-123",
+        )
+        self.client.force_login(viewer)
+
+        authenticated = self.client.get(reverse("photos"))
+        self.assertNotContains(authenticated, "data-auth-hint")
+        self.assertNotContains(authenticated, "Потрібно зареєструватися")
+
 
 class UniqueVisitorCounterTests(TestCase):
     def test_unique_device_is_counted_once_across_pages_and_stats_refresh(self):

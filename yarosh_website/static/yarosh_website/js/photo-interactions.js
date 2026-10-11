@@ -8,6 +8,52 @@
         return cookie ? decodeURIComponent(cookie.slice(prefix.length)) : "";
     };
 
+    const showAuthHint = (control, loginUrl, signupUrl) => {
+        document.querySelector(".photo-auth-hint")?.remove();
+        const hint = document.createElement("span");
+        hint.className = "photo-auth-hint";
+        hint.dataset.authHint = "";
+        hint.setAttribute("role", "status");
+        hint.append("Потрібно ");
+        if (loginUrl) {
+            const loginLink = document.createElement("a");
+            loginLink.href = loginUrl;
+            loginLink.textContent = "Увійти";
+            hint.append(loginLink);
+            if (signupUrl) {
+                hint.append(", або ");
+            }
+        }
+        if (signupUrl) {
+            const signupLink = document.createElement("a");
+            signupLink.href = signupUrl;
+            signupLink.textContent = "Зареєструватися";
+            hint.append(signupLink);
+        }
+        hint.append(" на сайті.");
+        document.body.append(hint);
+
+        const controlRect = control.getBoundingClientRect();
+        const hintRect = hint.getBoundingClientRect();
+        const left = Math.min(
+            Math.max(
+                controlRect.left + controlRect.width / 2 - hintRect.width / 2,
+                8,
+            ),
+            window.innerWidth - hintRect.width - 8,
+        );
+        hint.style.left = `${left}px`;
+        hint.style.top = `${Math.max(controlRect.top - hintRect.height - 8, 8)}px`;
+        window.setTimeout(() => hint.remove(), 4000);
+    };
+
+    document.querySelectorAll("[data-auth-hint]").forEach((control) => {
+        control.addEventListener("click", (event) => {
+            event.preventDefault();
+            showAuthHint(control, control.href, control.dataset.signupUrl);
+        });
+    });
+
     const sendShare = (modal) => {
         const csrfToken = getCookie("csrftoken");
         fetch(modal.dataset.shareEndpoint, {
@@ -53,7 +99,11 @@
                 });
                 const data = await response.json();
                 if (!response.ok) {
-                    throw new Error(data.error || "Не вдалося оновити вподобання.");
+                    const error = new Error(
+                        data.error || "Не вдалося оновити вподобання.",
+                    );
+                    error.status = response.status;
+                    throw error;
                 }
                 button.classList.toggle("is-liked", data.liked);
                 button.setAttribute("aria-pressed", String(data.liked));
@@ -61,6 +111,13 @@
             } catch (error) {
                 console.error("Не вдалося оновити вподобання:", error);
                 button.title = error.message;
+                if (error.status === 401) {
+                    showAuthHint(
+                        button,
+                        button.dataset.loginUrl,
+                        button.dataset.signupUrl,
+                    );
+                }
             } finally {
                 button.disabled = false;
             }

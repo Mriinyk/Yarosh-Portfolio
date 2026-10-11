@@ -2071,6 +2071,15 @@ html[data-theme="dark"] .auth-link {
     text-align: center;
 }
 
+.photo-comments-login a {
+    color: #168c0a;
+    font-weight: 700;
+}
+
+html[data-theme="dark"] .photo-comments-login a {
+    color: #76f568;
+}
+
 .photo-share-modal .modal-content {
     padding: clamp(1.2rem, 4vw, 2rem);
     border: 1px solid var(--auth-border);
@@ -2396,6 +2405,31 @@ html[data-theme="dark"] .auth-link {
     margin: 0;
     color: #c53a35;
     font-size: 0.8rem;
+}
+
+.photo-auth-hint {
+    position: fixed;
+    z-index: 2050;
+    max-width: min(17rem, calc(100vw - 2rem));
+    padding: 0.45rem 0.75rem;
+    border: 1px solid var(--auth-border);
+    border-radius: 0.65rem;
+    background: var(--auth-glass);
+    box-shadow: var(--auth-shadow);
+    color: var(--nav-ink);
+    font-size: 0.78rem;
+    text-align: center;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+}
+
+.photo-auth-hint a {
+    color: #168c0a;
+    font-weight: 700;
+}
+
+html[data-theme="dark"] .photo-auth-hint a {
+    color: #76f568;
 }
 
 html[data-theme="dark"] .photo-work-card,
