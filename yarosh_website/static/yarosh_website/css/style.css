@@ -60,6 +60,12 @@ html[data-theme="dark"] select:focus {
 
 @supports (view-transition-name: root) {
     @media (prefers-reduced-motion: no-preference) {
+        ::view-transition-old(root),
+        ::view-transition-new(root) {
+            transform: translateZ(0);
+            will-change: clip-path;
+        }
+
         ::view-transition-old(root) {
             animation: none;
         }
@@ -111,8 +117,8 @@ body {
     border-radius: 1.5rem;
     background: var(--nav-glass);
     box-shadow: var(--nav-shadow);
-    -webkit-backdrop-filter: blur(20px);
-    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
 }
 
 .site-navbar-top {
@@ -133,6 +139,7 @@ body {
     border: 1px solid rgba(36, 40, 36, 0.14);
     border-radius: 50%;
     transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+    will-change: transform;
 }
 
 .site-brand:hover,
@@ -583,7 +590,7 @@ body.home-site .site-main {
     background: rgba(8, 10, 9, 0.94);
     color: #fcfcfc;
     place-items: center;
-    backdrop-filter: blur(14px);
+    backdrop-filter: blur(10px);
 }
 
 .photo-gallery-close {
@@ -737,8 +744,8 @@ html[data-theme="dark"] .photo-session-card.is-centered:hover {
     border-radius: 1.5rem;
     background: var(--auth-glass);
     box-shadow: var(--auth-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.22);
-    -webkit-backdrop-filter: blur(20px);
-    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
 }
 
 .biography-photo::before {
@@ -998,8 +1005,8 @@ body.auth-site .site-main {
     border-radius: 1.5rem;
     background: var(--auth-glass);
     box-shadow: var(--auth-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.22);
-    -webkit-backdrop-filter: blur(20px);
-    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
     transform-origin: center;
     animation: auth-fade-in 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
@@ -1037,6 +1044,7 @@ body.auth-site .site-main {
     background: var(--auth-input);
     box-shadow: 0 0 1.5rem rgba(38, 232, 14, 0.12);
     transition: box-shadow 220ms ease, transform 220ms ease;
+    will-change: transform;
 }
 
 .auth-logo-link:hover,
@@ -1582,8 +1590,8 @@ html[data-theme="dark"] .auth-link {
     box-shadow: 0 0.65rem 2rem rgba(20, 28, 20, 0.055);
     color: var(--nav-ink);
     transition: border-color 180ms ease, box-shadow 180ms ease;
-    -webkit-backdrop-filter: blur(18px);
-    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
 }
 
 .photos-search input:focus {
@@ -2070,8 +2078,8 @@ html[data-theme="dark"] .auth-link {
     background: var(--auth-glass);
     box-shadow: var(--auth-shadow);
     color: var(--nav-ink);
-    -webkit-backdrop-filter: blur(22px);
-    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
 }
 
 .photo-share-heading {
@@ -2194,8 +2202,9 @@ html[data-theme="dark"] .auth-link {
     color: #168c0a;
     place-items: center;
     transition: box-shadow 180ms ease, transform 180ms ease;
-    -webkit-backdrop-filter: blur(18px);
-    backdrop-filter: blur(18px);
+    will-change: transform;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
 }
 
 .photo-admin-add:hover {
@@ -2225,8 +2234,8 @@ html[data-theme="dark"] .auth-link {
     box-shadow:
         0 0.3rem 1rem rgba(20, 28, 20, 0.025),
         0 1.2rem 3rem rgba(20, 28, 20, 0.05);
-    -webkit-backdrop-filter: blur(18px);
-    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
 }
 
 .site-footer-stats {
@@ -2289,8 +2298,8 @@ html[data-theme="dark"] .auth-link {
     border-radius: 1.4rem;
     background: var(--auth-glass);
     box-shadow: var(--auth-shadow);
-    -webkit-backdrop-filter: blur(20px);
-    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
 }
 
 .photo-editor-card h1 {
@@ -2499,8 +2508,8 @@ html[data-theme="dark"] .photo-work-card:not(.is-gallery-dismissed):focus-within
     border-radius: 1.5rem;
     background: var(--nav-glass);
     box-shadow: var(--nav-shadow);
-    -webkit-backdrop-filter: blur(20px);
-    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
 }
 
 .photo-share-links a {

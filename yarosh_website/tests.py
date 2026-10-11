@@ -1057,6 +1057,6 @@ class UniqueVisitorCounterTests(TestCase):
     def test_footer_is_shared_and_excludes_the_video_counter(self):
         response = self.client.get(reverse("contact"))
 
-        self.assertContains(response, "Унікальні відвідувачі")
+        self.assertContains(response, "Відвідування вебсайту")
         self.assertContains(response, "Фотосесії")
         self.assertNotContains(response, "Кількість відеоробіт")
