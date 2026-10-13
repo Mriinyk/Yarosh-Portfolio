@@ -182,11 +182,17 @@ body {
     transition: color 180ms ease, text-shadow 180ms ease, background 180ms ease;
 }
 
-.site-nav-link:hover,
 .site-nav-link:focus-visible,
 .site-nav-link.is-active {
     color: #168c0a;
     text-shadow: 0 0 0.55rem rgba(38, 232, 14, 0.55);
+}
+
+@media (hover: hover) {
+    .site-nav-link:hover {
+        color: #168c0a;
+        text-shadow: 0 0 0.55rem rgba(38, 232, 14, 0.55);
+    }
 }
 
 .site-theme-toggle {
@@ -245,10 +251,25 @@ body {
     transition: filter 180ms ease, transform 180ms ease;
 }
 
-.site-theme-toggle:hover .theme-icon,
-.site-theme-toggle:focus-visible .theme-icon {
-    filter: drop-shadow(0 0 0.35rem rgba(38, 232, 14, 0.9));
+.theme-icon-moon {
+    --icon-glow: drop-shadow(0 0 0.35rem rgba(38, 232, 14, 0.9));
+}
+
+.theme-icon-sun {
+    --icon-glow: drop-shadow(0 0 0.5rem rgba(38, 232, 14, 0.95));
+}
+
+.site-theme-toggle:focus-visible .theme-icon,
+.site-theme-toggle.is-tapped .theme-icon {
+    filter: var(--icon-glow, drop-shadow(0 0 0.35rem rgba(38, 232, 14, 0.9)));
     transform: scale(1.08);
+}
+
+@media (hover: hover) {
+    .site-theme-toggle:hover .theme-icon {
+        filter: var(--icon-glow, drop-shadow(0 0 0.35rem rgba(38, 232, 14, 0.9)));
+        transform: scale(1.08);
+    }
 }
 
 .theme-icon-sun,
@@ -260,15 +281,40 @@ html[data-theme="dark"] .theme-icon-sun {
     display: block;
 }
 
+html[data-theme="light"] .site-theme-toggle,
+html[data-theme="light"] .site-theme-toggle:focus-visible {
+    color: var(--nav-link-ink);
+    text-shadow: none;
+}
+
+html[data-theme="light"] .site-theme-toggle.is-tapped {
+    color: var(--accent);
+    text-shadow: 0 0 0.55rem rgba(38, 232, 14, 0.55);
+}
+
+@media (hover: hover) {
+    html[data-theme="light"] .site-theme-toggle:hover {
+        color: var(--accent);
+        text-shadow: 0 0 0.55rem rgba(38, 232, 14, 0.55);
+    }
+}
+
 html[data-theme="dark"] .site-theme-toggle,
 html[data-theme="dark"] .site-theme-toggle:focus-visible {
     color: #fcfcfc;
     text-shadow: none;
 }
 
-html[data-theme="dark"] .site-theme-toggle:hover {
+html[data-theme="dark"] .site-theme-toggle.is-tapped {
     color: var(--accent);
     text-shadow: 0 0 0.55rem rgba(38, 232, 14, 0.55);
+}
+
+@media (hover: hover) {
+    html[data-theme="dark"] .site-theme-toggle:hover {
+        color: var(--accent);
+        text-shadow: 0 0 0.55rem rgba(38, 232, 14, 0.55);
+    }
 }
 
 .site-navbar-toggler {
@@ -1397,10 +1443,16 @@ html[data-theme="dark"] .auth-link {
         transition: opacity 180ms ease, transform 220ms ease;
     }
 
-    .site-nav-link:hover::after,
     .site-nav-link:focus-visible::after {
         opacity: 1;
         transform: scaleX(1);
+    }
+
+    @media (hover: hover) {
+        .site-nav-link:hover::after {
+            opacity: 1;
+            transform: scaleX(1);
+        }
     }
 }
 
