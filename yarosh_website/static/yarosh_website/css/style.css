@@ -1687,6 +1687,7 @@ html[data-theme="dark"] .auth-link {
 }
 
 .photo-type-nav {
+    --photo-type-size: 0.91rem;
     display: flex;
     width: 100%;
     flex-wrap: wrap;
@@ -1703,10 +1704,13 @@ html[data-theme="dark"] .auth-link {
     align-items: center;
     padding: 0.4rem 0.1rem;
     color: var(--nav-link-ink);
-    font-size: 0.91rem;
+    font-size: var(--photo-type-size);
     font-weight: 700;
     letter-spacing: 0.045em;
     text-decoration: none;
+    /* font-size must change instantly: the carousel measures link geometry
+       synchronously after toggling .is-active, and a size transition would
+       shift the strip under the scroll animation (breaking centring). */
     transition: color 180ms ease, text-shadow 180ms ease;
 }
 
@@ -1726,17 +1730,58 @@ html[data-theme="dark"] .auth-link {
     transition: transform 220ms ease;
 }
 
-.photo-type-link:hover,
 .photo-type-link:focus-visible,
 .photo-type-link.is-active {
     color: #168c0a;
     text-shadow: 0 0 0.8rem rgba(38, 232, 14, 0.48);
 }
 
-.photo-type-link:hover::after,
 .photo-type-link:focus-visible::after,
 .photo-type-link.is-active::after {
     transform: scaleX(1);
+}
+
+@media (hover: hover) {
+    .photo-type-link:hover {
+        color: #168c0a;
+        text-shadow: 0 0 0.8rem rgba(38, 232, 14, 0.48);
+    }
+
+    .photo-type-link:hover::after {
+        transform: scaleX(1);
+    }
+}
+
+.photo-type-link.is-active {
+    font-size: calc(var(--photo-type-size) * 1.5);
+}
+
+/* JavaScript turns the strip into an infinite carousel: links snap to the
+   centre while the glow stays clipped to the underline "line". */
+.photo-type-nav.is-carousel {
+    flex-wrap: nowrap;
+    justify-content: center;
+    padding-inline: 0.6rem;
+    padding-bottom: 1px;
+    overflow: hidden;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+}
+
+.photo-type-nav.is-carousel.is-scrollable {
+    justify-content: flex-start;
+    overflow-x: auto;
+}
+
+.photo-type-nav.is-carousel::-webkit-scrollbar {
+    display: none;
+}
+
+.photo-type-nav.is-carousel .photo-type-link {
+    flex: 0 0 auto;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
 }
 
 .photo-session-grid {
@@ -2517,10 +2562,13 @@ html[data-theme="dark"] .photo-work-card:not(.is-gallery-dismissed):focus-within
     }
 
     .photo-type-nav {
+        --photo-type-size: 0.82rem;
         justify-content: flex-start;
         flex-wrap: nowrap;
         gap: 1.4rem;
+        padding-inline: 0.6rem;
         overflow-x: auto;
+        overscroll-behavior-x: contain;
         scrollbar-width: none;
     }
 
@@ -2530,7 +2578,6 @@ html[data-theme="dark"] .photo-work-card:not(.is-gallery-dismissed):focus-within
 
     .photo-type-link {
         flex: 0 0 auto;
-        font-size: 0.82rem;
     }
 
     .photo-session-grid {

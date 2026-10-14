@@ -433,8 +433,13 @@
         }
     };
 
-    document.querySelectorAll("[data-gallery-url]").forEach((trigger) => {
-        trigger.addEventListener("click", () => openGallery(trigger));
+    // Delegate to the document so cards replaced by the category carousel
+    // keep opening the gallery without re-binding individual triggers.
+    document.addEventListener("click", (event) => {
+        const trigger = event.target.closest?.("[data-gallery-url]");
+        if (trigger) {
+            openGallery(trigger);
+        }
     });
     closeButton.addEventListener("click", (event) => {
         closeGallery({ pointerInitiated: event.detail > 0 });

@@ -47,11 +47,15 @@
         window.setTimeout(() => hint.remove(), 4000);
     };
 
-    document.querySelectorAll("[data-auth-hint]").forEach((control) => {
-        control.addEventListener("click", (event) => {
-            event.preventDefault();
-            showAuthHint(control, control.href, control.dataset.signupUrl);
-        });
+    // Delegated handlers keep working after the category carousel swaps the
+    // grid contents without a full page reload.
+    document.addEventListener("click", (event) => {
+        const control = event.target.closest?.("[data-auth-hint]");
+        if (!control) {
+            return;
+        }
+        event.preventDefault();
+        showAuthHint(control, control.href, control.dataset.signupUrl);
     });
 
     const sendShare = (modal) => {
@@ -86,42 +90,44 @@
             });
     };
 
-    document.querySelectorAll("[data-photo-like]").forEach((button) => {
-        button.addEventListener("click", async () => {
-            button.disabled = true;
-            try {
-                const response = await fetch(button.dataset.actionUrl, {
-                    method: "POST",
-                    headers: {
-                        "X-CSRFToken": getCookie("csrftoken"),
-                        "X-Requested-With": "XMLHttpRequest",
-                    },
-                });
-                const data = await response.json();
-                if (!response.ok) {
-                    const error = new Error(
-                        data.error || "Не вдалося оновити вподобання.",
-                    );
-                    error.status = response.status;
-                    throw error;
-                }
-                button.classList.toggle("is-liked", data.liked);
-                button.setAttribute("aria-pressed", String(data.liked));
-                button.querySelector("[data-like-count]").textContent = data.likes_count;
-            } catch (error) {
-                console.error("Не вдалося оновити вподобання:", error);
-                button.title = error.message;
-                if (error.status === 401) {
-                    showAuthHint(
-                        button,
-                        button.dataset.loginUrl,
-                        button.dataset.signupUrl,
-                    );
-                }
-            } finally {
-                button.disabled = false;
+    document.addEventListener("click", async (event) => {
+        const button = event.target.closest?.("[data-photo-like]");
+        if (!button) {
+            return;
+        }
+        button.disabled = true;
+        try {
+            const response = await fetch(button.dataset.actionUrl, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": getCookie("csrftoken"),
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                const error = new Error(
+                    data.error || "Не вдалося оновити вподобання.",
+                );
+                error.status = response.status;
+                throw error;
             }
-        });
+            button.classList.toggle("is-liked", data.liked);
+            button.setAttribute("aria-pressed", String(data.liked));
+            button.querySelector("[data-like-count]").textContent = data.likes_count;
+        } catch (error) {
+            console.error("Не вдалося оновити вподобання:", error);
+            button.title = error.message;
+            if (error.status === 401) {
+                showAuthHint(
+                    button,
+                    button.dataset.loginUrl,
+                    button.dataset.signupUrl,
+                );
+            }
+        } finally {
+            button.disabled = false;
+        }
     });
 
     const commentsGrid = document.querySelector(".photo-session-grid");
@@ -264,13 +270,25 @@
         }
     });
 
-    document.querySelectorAll(".photo-share-modal").forEach((modal) => {
-        modal.querySelectorAll("[data-share-link]").forEach((link) => {
-            link.addEventListener("click", () => sendShare(modal));
-        });
-        const copyButton = modal.querySelector("[data-copy-share]");
-        copyButton?.addEventListener("click", async () => {
-            const status = modal.querySelector("[data-share-status]");
+    document.addEventListener("click", (event) => {
+        const shareLink = event.target.closest?.("[data-share-link]");
+        if (shareLink) {
+            const modal = shareLink.closest(".photo-share-modal");
+            if (modal) {
+                sendShare(modal);
+            }
+            return;
+        }
+        const copyButton = event.target.closest?.("[data-copy-share]");
+        if (!copyButton) {
+            return;
+        }
+        const modal = copyButton.closest(".photo-share-modal");
+        if (!modal) {
+            return;
+        }
+        const status = modal.querySelector("[data-share-status]");
+        (async () => {
             try {
                 await navigator.clipboard.writeText(copyButton.dataset.shareUrl);
                 sendShare(modal);
@@ -279,7 +297,7 @@
                 console.error("Не вдалося скопіювати посилання:", error);
                 status.textContent = "Не вдалося скопіювати посилання. Спробуйте скопіювати його з поля вище.";
             }
-        });
+        })();
     });
 
     document.querySelectorAll("[data-new-category-field]").forEach((field) => {
@@ -297,20 +315,30 @@
         updateVisibility();
     });
 
-    document.querySelectorAll("[data-cover-image]").forEach((image) => {
-        const applyCoverRatio = () => {
-            if (!image.naturalWidth || !image.naturalHeight) {
-                return;
-            }
-            image.closest(".photo-work-cover")?.style.setProperty(
-                "--cover-ratio",
-                String(image.naturalWidth / image.naturalHeight),
-            );
-        };
-        if (image.complete) {
-            applyCoverRatio();
-        } else {
-            image.addEventListener("load", applyCoverRatio, { once: true });
+    const applyCoverRatio = (image) => {
+        if (!image.naturalWidth || !image.naturalHeight) {
+            return;
         }
-    });
+        image.closest(".photo-work-cover")?.style.setProperty(
+            "--cover-ratio",
+            String(image.naturalWidth / image.naturalHeight),
+        );
+    };
+    const applyReadyCovers = () => {
+        document.querySelectorAll("[data-cover-image]").forEach((image) => {
+            if (image.complete) {
+                applyCoverRatio(image);
+            }
+        });
+    };
+    // `load` does not bubble, so listen in the capture phase to also catch
+    // cover images injected later by the category carousel.
+    document.addEventListener("load", (event) => {
+        const image = event.target;
+        if (image instanceof HTMLImageElement && image.hasAttribute("data-cover-image")) {
+            applyCoverRatio(image);
+        }
+    }, true);
+    applyReadyCovers();
+    document.addEventListener("photos:grid-updated", applyReadyCovers);
 })();

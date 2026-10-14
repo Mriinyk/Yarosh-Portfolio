@@ -782,6 +782,12 @@ class PhotoSessionPageTests(TestCase):
         )
         self.assertContains(response, "Без категорії")
 
+    def test_photo_page_loads_the_live_category_carousel(self):
+        response = self.client.get(reverse("photos"))
+
+        self.assertContains(response, "photo-type-nav")
+        self.assertContains(response, "photo-type-carousel.js")
+
     def test_photo_page_shows_nine_sessions_per_page_and_preserves_filters(self):
         for index in range(9):
             PhotoSession.objects.create(
