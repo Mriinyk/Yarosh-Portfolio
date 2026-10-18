@@ -1700,7 +1700,7 @@ html[data-theme="dark"] .auth-link {
 .photo-type-link {
     position: relative;
     display: inline-flex;
-    min-height: 3rem;
+    min-height: 3.75rem;
     align-items: center;
     padding: 0.4rem 0.1rem;
     color: var(--nav-link-ink);
@@ -1762,7 +1762,7 @@ html[data-theme="dark"] .auth-link {
     flex-wrap: nowrap;
     justify-content: center;
     padding-inline: 0.6rem;
-    padding-bottom: 1px;
+    padding-bottom: 2px;
     overflow: hidden;
     overscroll-behavior-x: contain;
     scrollbar-width: none;
@@ -2314,8 +2314,21 @@ html[data-theme="dark"] .photo-comments-login a {
 }
 
 .photo-admin-add:hover {
-    box-shadow: 0 0 1.2rem rgba(38, 232, 14, 0.25);
+    background: #168c0a;
+    box-shadow: 0 0 1.2rem rgba(38, 232, 14, 0.35);
     transform: scale(1.05);
+}
+
+.photo-admin-add:hover svg {
+    stroke: #000000;
+}
+
+html[data-theme="light"] .photo-admin-add:hover {
+    background: #26e80e;
+}
+
+html[data-theme="light"] .photo-admin-add:hover svg {
+    stroke: #ffffff;
 }
 
 .photo-admin-add svg {

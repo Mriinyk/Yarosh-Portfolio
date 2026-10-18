@@ -97,7 +97,7 @@
     // copy whose centred position is closest to the current scroll offset and
     // still within [0, maxScroll], so picking a far-edge clone never clamps
     // to the wrong category.
-    const centerableLink = (link) => {
+    const centerableLink = (link, direction = 0) => {
         if (!link) {
             return null;
         }
@@ -105,6 +105,8 @@
         const maxScroll = nav.scrollWidth - nav.clientWidth;
         let best = null;
         let bestDistance = Infinity;
+        let bestAny = null;
+        let bestAnyDistance = Infinity;
         nav.querySelectorAll(".photo-type-link").forEach((candidate) => {
             if (normalizeUrl(hrefOf(candidate)) !== href) {
                 return;
@@ -114,12 +116,26 @@
                 return;
             }
             const distance = Math.abs(target - nav.scrollLeft);
+            if (distance < bestAnyDistance) {
+                bestAnyDistance = distance;
+                bestAny = candidate;
+            }
+            // Respect the requested scroll direction:
+            //  -1 = scroll left (clicked category is left of active)
+            //   1 = scroll right (clicked category is right of active)
+            //   0 = any direction (fallback)
+            if (direction < 0 && target >= nav.scrollLeft) {
+                return;
+            }
+            if (direction > 0 && target <= nav.scrollLeft) {
+                return;
+            }
             if (distance < bestDistance) {
                 bestDistance = distance;
                 best = candidate;
             }
         });
-        return best || link;
+        return best || bestAny || link;
     };
 
     const centerOn = (link, behavior) => {
@@ -299,8 +315,13 @@
             return;
         }
         const alreadyActive = normalizeUrl(url) === activeHref;
+
         setActive(link);
-        centerOn(centerableLink(link), centerBehavior());
+
+        // Centre the exact link the user clicked on. This guarantees the
+        // carousel scrolls toward the clicked category: left-side clicks
+        // scroll left, right-side clicks scroll right, regardless of clones.
+        centerOn(link, centerBehavior());
         if (alreadyActive) {
             return;
         }
@@ -340,7 +361,7 @@
         wheelTimer = window.setTimeout(() => {
             wheelLocked = false;
         }, 450);
-        centerOn(centerableLink(sibling), centerBehavior());
+        centerOn(centerableLink(sibling, direction), centerBehavior());
     }, { passive: false });
 
     nav.addEventListener("scroll", () => {
