@@ -1796,9 +1796,8 @@ html[data-theme="dark"] .auth-link {
     border-radius: 1.2rem;
     background: color-mix(in srgb, var(--auth-glass) 70%, transparent);
     box-shadow:
-        0 0.25rem 0.75rem rgba(20, 28, 20, 0.025),
-        0 1rem 2.5rem rgba(20, 28, 20, 0.045),
-        0 2.5rem 5rem rgba(20, 28, 20, 0.035);
+        0 0.15rem 0.4rem rgba(20, 28, 20, 0.08),
+        0 0.5rem 1rem rgba(20, 28, 20, 0.06);
     transition:
         border-color 250ms ease,
         background-color 250ms ease,
@@ -1811,9 +1810,8 @@ html[data-theme="dark"] .auth-link {
     border-color: rgba(38, 232, 14, 0.48);
     background: color-mix(in srgb, var(--auth-glass) 86%, transparent);
     box-shadow:
-        0 0.35rem 1rem rgba(38, 232, 14, 0.04),
-        0 1.25rem 3rem rgba(38, 232, 14, 0.055),
-        0 2.75rem 5.5rem rgba(20, 28, 20, 0.085);
+        0 0.2rem 0.5rem rgba(38, 232, 14, 0.06),
+        0 0.6rem 1.2rem rgba(38, 232, 14, 0.08);
     transform: translateY(-3px);
 }
 
@@ -2542,17 +2540,15 @@ html[data-theme="dark"] .photo-auth-hint a {
 html[data-theme="dark"] .photo-work-card,
 html[data-theme="dark"] .site-footer-panel {
     box-shadow:
-        0 0.3rem 0.9rem rgba(0, 0, 0, 0.12),
-        0 1.1rem 2.8rem rgba(0, 0, 0, 0.17),
-        0 2.7rem 5rem rgba(0, 0, 0, 0.13);
+        0 0.2rem 0.5rem rgba(0, 0, 0, 0.3),
+        0 0.6rem 1.2rem rgba(0, 0, 0, 0.2);
 }
 
 html[data-theme="dark"] .photo-work-card:not(.is-gallery-dismissed):hover,
 html[data-theme="dark"] .photo-work-card:not(.is-gallery-dismissed):focus-within {
     box-shadow:
-        0 0.4rem 1.1rem rgba(38, 232, 14, 0.07),
-        0 1.4rem 3.2rem rgba(38, 232, 14, 0.09),
-        0 3rem 5.5rem rgba(0, 0, 0, 0.3);
+        0 0.25rem 0.6rem rgba(38, 232, 14, 0.1),
+        0 0.7rem 1.4rem rgba(38, 232, 14, 0.12);
 }
 
 @media (max-width: 900px) {
