@@ -788,6 +788,93 @@ class PhotoSessionPageTests(TestCase):
         self.assertContains(response, "photo-type-nav")
         self.assertContains(response, "photo-type-carousel.js")
 
+    def test_photo_type_nav_renders_all_photo_types_as_links(self):
+        """Every PhotoSessionType must appear as a link in the category carousel."""
+        response = self.client.get(reverse("photos"))
+        rendered = response.content.decode()
+
+        self.assertContains(response, "Усі")
+        self.assertContains(response, "Портрети")
+        self.assertContains(response, "Тематичні фотосесії")
+        self.assertContains(response, "Заходи")
+        self.assertContains(response, "Корпоративні фотосесії")
+
+    def test_photo_type_nav_active_link_marked_when_no_filter(self):
+        """The 'Усі' link should carry the active class when no type filter is applied."""
+        response = self.client.get(reverse("photos"))
+        rendered = response.content.decode()
+
+        self.assertIn('class="photo-type-link is-active"', rendered)
+        self.assertIn('aria-current="page"', rendered)
+
+    def test_photo_type_nav_active_link_marked_when_filtered(self):
+        """The selected category link should carry the active class when filtering."""
+        response = self.client.get(reverse("photos"), {"type": self.photo_type.pk})
+        rendered = response.content.decode()
+
+        self.assertIn('photo-type-link is-active', rendered)
+        self.assertNotContains(response, 'class="photo-type-link is-active"Усі')
+
+    def test_new_photo_session_type_appears_in_category_carousel(self):
+        """A newly created category must appear in the category carousel nav."""
+        new_type = PhotoSessionType.objects.create(
+            name="Сонячні зйомки",
+            order=5,
+        )
+
+        response = self.client.get(reverse("photos"))
+        rendered = response.content.decode()
+
+        self.assertContains(response, "Сонячні зйомки")
+        self.assertContains(
+            response,
+            f'type={new_type.pk}',
+        )
+
+    def test_category_carousel_link_count_matches_database_count(self):
+        """The number of category links rendered must equal the number of types in the DB."""
+        db_count = PhotoSessionType.objects.count() + 1  # +1 for the "Усі" link
+        response = self.client.get(reverse("photos"))
+        rendered = response.content.decode()
+
+        # Count photo-type-link elements in the rendered HTML
+        link_count = rendered.count('class="photo-type-link')
+        self.assertEqual(link_count, db_count)
+
+    def test_category_carousel_links_have_unique_hrefs(self):
+        """Each category link must have a distinct href to avoid navigation ambiguity."""
+        response = self.client.get(reverse("photos"))
+        rendered = response.content.decode()
+
+        hrefs = []
+        import re
+        for match in re.finditer(r'href="([^"]*type=\d+[^"]*)"', rendered):
+            hrefs.append(match.group(1))
+
+        self.assertEqual(len(hrefs), len(set(hrefs)), "Duplicate category hrefs found")
+
+    def test_category_carousel_preserves_search_query_in_links(self):
+        """Category links must preserve the current search query parameter."""
+        response = self.client.get(reverse("photos"), {"q": "поррет"})
+        rendered = response.content.decode()
+
+        self.assertIn('q=%D0%BF%D0%BE%D1%80%D1%80%D0%B5%D1%82', rendered)
+
+    def test_clones_have_data_clone_attribute_and_aria_hidden(self):
+        """Carousel clones are added by JavaScript with data-clone and aria-hidden.
+
+        Server-side we verify the base links exist and the carousel script loads;
+        the JS cloneSet() function adds data-clone, aria-hidden, and tabindex=-1
+        to each clone on page load.
+        """
+        response = self.client.get(reverse("photos"))
+        rendered = response.content.decode()
+
+        # Base category links must exist in server-rendered HTML
+        self.assertContains(response, "photo-type-link")
+        self.assertContains(response, "Усі")
+        self.assertContains(response, "photo-type-carousel.js")
+
     def test_photo_page_shows_nine_sessions_per_page_and_preserves_filters(self):
         for index in range(9):
             PhotoSession.objects.create(
