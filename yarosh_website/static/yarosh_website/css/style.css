@@ -1766,7 +1766,6 @@ html[data-theme="dark"] .auth-link {
     overflow: hidden;
     overscroll-behavior-x: contain;
     scrollbar-width: none;
-    scroll-snap-type: x mandatory;
 }
 
 .photo-type-nav.is-carousel.is-scrollable {
@@ -1780,8 +1779,6 @@ html[data-theme="dark"] .auth-link {
 
 .photo-type-nav.is-carousel .photo-type-link {
     flex: 0 0 auto;
-    scroll-snap-align: center;
-    scroll-snap-stop: always;
 }
 
 .photo-session-grid {
@@ -2583,6 +2580,7 @@ html[data-theme="dark"] .photo-work-card:not(.is-gallery-dismissed):focus-within
         overflow-x: auto;
         overscroll-behavior-x: contain;
         scrollbar-width: none;
+        touch-action: pan-x;
     }
 
     .photo-type-nav::-webkit-scrollbar {

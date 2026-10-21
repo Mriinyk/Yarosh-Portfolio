@@ -22,6 +22,14 @@
     let resizeTimer = null;
     let wheelTimer = null;
     let wheelLocked = false;
+    let touchStartX = null;
+    let touchStartScrollLeft = 0;
+    let touchLocked = false;
+    let touchTimer = null;
+    let isTouching = false;
+    let touchStartActive = null;
+    let touchJustCentered = false;
+    let scrollLocked = false;
 
     const hrefOf = (link) => link.getAttribute("href") || "";
 
@@ -142,6 +150,8 @@
         if (!scrollable || !link) {
             return;
         }
+        scrollLocked = true;
+        window.setTimeout(() => { scrollLocked = false; }, 300);
         nav.scrollTo({ left: Math.max(0, centerTargetFor(link)), behavior });
     };
 
@@ -316,7 +326,11 @@
         }
         const alreadyActive = normalizeUrl(url) === activeHref;
 
+        // Set active first so font size is final before we measure the link
+        // rect for centering. Protect the scroll handler from fighting back.
         setActive(link);
+        touchJustCentered = true;
+        window.setTimeout(() => { touchJustCentered = false; }, 1000);
 
         // Centre the exact link the user clicked on. This guarantees the
         // carousel scrolls toward the clicked category: left-side clicks
@@ -364,10 +378,58 @@
         centerOn(centerableLink(sibling, direction), centerBehavior());
     }, { passive: false });
 
+    nav.addEventListener("touchstart", (event) => {
+        touchStartX = event.changedTouches[0].clientX;
+        touchStartScrollLeft = nav.scrollLeft;
+        touchStartActive = activeBaseLink();
+        isTouching = true;
+    }, { passive: true });
+
+    nav.addEventListener("touchmove", (event) => {
+        // Prevent native scrolling so the carousel doesn't drift during the
+        // swipe; we move exactly one category on touchend instead.
+        event.preventDefault();
+    }, { passive: false });
+
+    nav.addEventListener("touchend", (event) => {
+        isTouching = false;
+        window.clearTimeout(settleTimer);
+        if (touchStartX === null || touchLocked) {
+            touchStartX = null;
+            touchStartActive = null;
+            return;
+        }
+        const distance = event.changedTouches[0].clientX - touchStartX;
+        touchStartX = null;
+        const startActive = touchStartActive;
+        touchStartActive = null;
+        if (Math.abs(distance) < 30) {
+            return;
+        }
+        event.preventDefault();
+        const direction = distance > 0 ? 1 : -1;
+        const sibling = direction > 0
+            ? startActive?.nextElementSibling
+            : startActive?.previousElementSibling;
+        if (!sibling?.classList?.contains("photo-type-link")) {
+            return;
+        }
+        touchLocked = true;
+        touchJustCentered = true;
+        window.setTimeout(() => { touchJustCentered = false; }, 1000);
+        window.clearTimeout(touchTimer);
+        touchTimer = window.setTimeout(() => {
+            touchLocked = false;
+        }, 450);
+        // Set active first so font size is final before measuring rect.
+        setActive(sibling);
+        centerOn(sibling, centerBehavior());
+    }, { passive: false });
+
     nav.addEventListener("scroll", () => {
         window.clearTimeout(settleTimer);
         settleTimer = window.setTimeout(() => {
-            if (!scrollable) {
+            if (!scrollable || isTouching || touchJustCentered || scrollLocked) {
                 return;
             }
             normalizeLoop();
