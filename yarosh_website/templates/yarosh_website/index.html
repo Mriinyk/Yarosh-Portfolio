@@ -69,8 +69,8 @@
     </div>
     <div class="biography-layout">
         <figure class="biography-photo">
-            {% if biography.photo %}
-                <img src="{{ biography.photo.url }}" alt="Фото Олександри Ярош" loading="lazy">
+            {% if biography.direct_photo_url %}
+                <img src="{{ biography.direct_photo_url }}" alt="Фото Олександри Ярош" loading="lazy">
             {% else %}
                 <img src="{% static 'yarosh_website/images/Biographical.jpg' %}" alt="Фото Олександри Ярош" loading="lazy">
             {% endif %}

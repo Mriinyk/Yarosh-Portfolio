@@ -151,13 +151,15 @@ class BiographyAdmin(admin.ModelAdmin):
     list_display = ("title", "photo_preview")
     search_fields = ("title", "text")
     readonly_fields = ("photo_preview",)
+    fields = ("title", "text", "photo_url")
 
     @admin.display(description="Фото")
     def photo_preview(self, obj):
-        if not obj.photo:
+        url = obj.direct_photo_url
+        if not url:
             return "Стандартне зображення (Biographical.jpg)"
         return format_html(
             '<img src="{}" alt="" style="width: 120px; height: 68px; '
             'object-fit: cover; border-radius: 8px;">',
-            obj.photo.url,
+            url,
         )

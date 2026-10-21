@@ -215,15 +215,60 @@ class HomePageTemplateTests(TestCase):
             rendered.index('id="biography"'),
         )
 
-    def test_homepage_biography_uses_uploaded_photo_when_present(self):
+    def test_homepage_biography_uses_photo_url_when_present(self):
         biography = Biography.objects.first()
-        biography.photo = "biography/custom.jpg"
-        biography.save(update_fields=["photo"])
+        biography.photo_url = "https://drive.google.com/file/d/biography-file-id/view"
+        biography.save(update_fields=["photo_url"])
 
         response = self.client.get(reverse("index"))
 
-        self.assertContains(response, "biography/custom.jpg")
+        self.assertContains(
+            response,
+            "https://lh3.googleusercontent.com/d/biography-file-id",
+        )
         self.assertNotContains(response, "Biographical.jpg")
+
+    def test_homepage_biography_uses_default_when_no_photo(self):
+        biography = Biography.objects.first()
+        biography.photo_url = ""
+        biography.save()
+
+        response = self.client.get(reverse("index"))
+
+        self.assertContains(response, "Biographical.jpg")
+
+    def test_biography_normalize_google_drive_url(self):
+        biography = Biography.objects.first()
+
+        # Google Drive file/d/ URL
+        self.assertEqual(
+            biography.normalize_google_drive_url(
+                "https://drive.google.com/file/d/abc123/view"
+            ),
+            "https://lh3.googleusercontent.com/d/abc123",
+        )
+
+        # Google Drive open?id= URL
+        self.assertEqual(
+            biography.normalize_google_drive_url(
+                "https://drive.google.com/open?id=xyz789"
+            ),
+            "https://lh3.googleusercontent.com/d/xyz789",
+        )
+
+        # Already direct lh3 URL
+        self.assertEqual(
+            biography.normalize_google_drive_url(
+                "https://lh3.googleusercontent.com/d/direct123"
+            ),
+            "https://lh3.googleusercontent.com/d/direct123",
+        )
+
+        # Non-Google URL returned as-is
+        self.assertEqual(
+            biography.normalize_google_drive_url("https://images.example.com/photo.jpg"),
+            "https://images.example.com/photo.jpg",
+        )
 
     def test_photo_session_cover_normalization_and_folder_id(self):
         photo_session = PhotoSession(

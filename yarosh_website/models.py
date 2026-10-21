@@ -372,13 +372,15 @@ class Biography(models.Model):
         verbose_name="Текст біографії",
         help_text="Розділяйте абзаци порожнім рядком.",
     )
-    photo = models.ImageField(
-        upload_to="biography/",
+    photo_url = models.URLField(
+        max_length=2048,
         blank=True,
-        verbose_name="Фото",
+        verbose_name="Посилання на фото",
         help_text=(
-            "Якщо фото не завантажено, використовується стандартне "
-            "зображення Biographical.jpg."
+            "Вставте пряме публічне посилання на фото або посилання на файл Google Drive "
+            "(наприклад, drive.google.com/file/d/ID/view). Доступ до файлу має бути "
+            "відкритий для всіх за посиланням. Якщо посилання не вказано, буде використано "
+            "стандартне зображення Biographical.jpg."
         ),
     )
 
@@ -386,6 +388,30 @@ class Biography(models.Model):
         verbose_name = "Biography"
         verbose_name_plural = "Biography"
         ordering = ["pk"]
+
+    @staticmethod
+    def normalize_google_drive_url(url):
+        cleaned = url.strip()
+        if "lh3.googleusercontent.com" in cleaned:
+            return cleaned
+
+        match = re.search(r"/d/([A-Za-z0-9_-]+)", cleaned)
+        if not match:
+            match = re.search(r"[?&]id=([A-Za-z0-9_-]+)", cleaned)
+        if match:
+            return f"https://lh3.googleusercontent.com/d/{match.group(1)}"
+        return cleaned
+
+    @property
+    def direct_photo_url(self):
+        if self.photo_url:
+            return self.normalize_google_drive_url(self.photo_url)
+        return None
+
+    def save(self, *args, **kwargs):
+        if self.photo_url:
+            self.photo_url = self.normalize_google_drive_url(self.photo_url)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
