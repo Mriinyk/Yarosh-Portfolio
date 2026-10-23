@@ -462,6 +462,7 @@
     let requestVersion = 0;
     let touchStartX = null;
     let previousBodyOverflow = "";
+    let preloadedImages = new Map();
 
     const showImage = (index) => {
         if (!images.length) {
@@ -472,6 +473,37 @@
         image.src = images[currentIndex];
         counter.textContent = `${currentIndex + 1} / ${images.length}`;
         status.textContent = "";
+    };
+
+    // Завантажуємо списки зображень усіх галерей одразу після прогрузки сторінки,
+    // і попередньо завантажуємо самі зображення в кеш браузера, щоб при відкритті
+    // галереї фото з'являлися миттєво, без очікування мережі.
+    const preloadGalleries = async () => {
+        const triggers = Array.from(document.querySelectorAll("[data-gallery-url]"));
+        const urls = [...new Set(triggers.map((trigger) => trigger.dataset.galleryUrl))];
+        await Promise.all(
+            urls.map(async (url) => {
+                try {
+                    const response = await fetch(url, {
+                        headers: { Accept: "application/json" },
+                    });
+                    if (!response.ok) {
+                        return;
+                    }
+                    const result = await response.json();
+                    if (Array.isArray(result.images) && result.images.length) {
+                        preloadedImages.set(url, result.images);
+                        // Завантажуємо самі зображення в кеш браузера.
+                        result.images.forEach((imageUrl) => {
+                            const img = new Image();
+                            img.src = imageUrl;
+                        });
+                    }
+                } catch {
+                    // Ігноруємо помилки: openGallery завантажить галерею по потреби.
+                }
+            })
+        );
     };
 
     const openGallery = async (trigger) => {
@@ -489,6 +521,13 @@
         document.body.style.overflow = "hidden";
         gallery.hidden = false;
         closeButton.focus();
+
+        const preloaded = preloadedImages.get(trigger.dataset.galleryUrl);
+        if (preloaded) {
+            images = preloaded;
+            showImage(0);
+            return;
+        }
 
         try {
             const response = await fetch(trigger.dataset.galleryUrl, {
@@ -604,4 +643,12 @@
             showImage(currentIndex + 1);
         }
     });
+
+    // Завантажуємо списки галерей одразу після завантаження сторінки,
+    // щоб при відкритті галереї фото були відразу доступні.
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", preloadGalleries);
+    } else {
+        preloadGalleries();
+    }
 })();
