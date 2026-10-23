@@ -13,7 +13,11 @@
         let settleTimer = null;
         let wheelTimer = null;
         let maintainTimer = null;
-        let wheelLocked = false;
+        let navLocked = false;
+        let isScrolling = false;
+        let scrollTargetLeft = null;
+        let touchStart = null;
+        let touchTimer = null;
         let focusPaused = false;
         let mobileResumeScrollY = null;
         let hasInteracted = false;
@@ -83,8 +87,18 @@
             if (!card) {
                 return;
             }
+            if (isMobile()) {
+                const cardTop = card.getBoundingClientRect().top + window.scrollY;
+                window.scrollTo({
+                    top: cardTop + card.offsetHeight / 2 - window.innerHeight / 2,
+                    behavior,
+                });
+                return;
+            }
+            const targetLeft = card.offsetLeft + card.offsetWidth / 2 - carousel.clientWidth / 2;
+            scrollTargetLeft = targetLeft;
             carousel.scrollTo({
-                left: card.offsetLeft + card.offsetWidth / 2 - carousel.clientWidth / 2,
+                left: targetLeft,
                 behavior,
             });
         };
@@ -263,8 +277,29 @@
             }
         };
 
+        const currentCenteredCardIndex = () => {
+            const bounds = {
+                x: carousel.getBoundingClientRect().left + carousel.clientWidth / 2,
+                y: carousel.getBoundingClientRect().top + carousel.clientHeight / 2,
+            };
+            let closestCard = null;
+            let closestDistance = Infinity;
+            cards.forEach((card) => {
+                const rect = card.getBoundingClientRect();
+                const xDistance = rect.left + rect.width / 2 - bounds.x;
+                const yDistance = rect.top + rect.height / 2 - bounds.y;
+                const distance = Math.hypot(xDistance, yDistance);
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closestCard = card;
+                }
+            });
+            return closestCard ? cards.indexOf(closestCard) : focusedCardIndex;
+        };
+
         const moveToAdjacentCard = (direction, behavior = "smooth") => {
-            const targetCard = cards[focusedCardIndex + direction];
+            const currentIndex = currentCenteredCardIndex();
+            const targetCard = cards[currentIndex + direction];
             if (targetCard) {
                 centerOnCard(targetCard, behavior);
             }
@@ -272,8 +307,20 @@
 
         carousel.addEventListener("scroll", scheduleFocusUpdate, { passive: true });
         carousel.addEventListener("scroll", () => {
+            isScrolling = true;
             window.clearTimeout(settleTimer);
-            settleTimer = window.setTimeout(normalizeLoopPosition, 140);
+            // Якщо вже досягли цільової позиції — скрутінг закінчився.
+            if (
+                scrollTargetLeft !== null &&
+                Math.abs(carousel.scrollLeft - scrollTargetLeft) < 2
+            ) {
+                scrollTargetLeft = null;
+            }
+            settleTimer = window.setTimeout(() => {
+                isScrolling = false;
+                scrollTargetLeft = null;
+                normalizeLoopPosition();
+            }, 140);
         }, { passive: true });
         window.addEventListener("scroll", scheduleFocusUpdate, { passive: true });
         window.addEventListener("scroll", resumeMobileFocusAfterScroll, { passive: true });
@@ -301,17 +348,94 @@
                 return;
             }
             event.preventDefault();
-            if (wheelLocked) {
+            if (scrollTargetLeft !== null || isScrolling || navLocked) {
                 return;
             }
-            wheelLocked = true;
+            navLocked = true;
             hasInteracted = true;
             moveToAdjacentCard(wheelDelta > 0 ? 1 : -1);
             window.clearTimeout(wheelTimer);
+            window.clearTimeout(touchTimer);
             wheelTimer = window.setTimeout(() => {
-                wheelLocked = false;
-            }, 450);
+                navLocked = false;
+            }, 800);
         }, { passive: false });
+
+        carousel.addEventListener("touchstart", (event) => {
+            if (scrollTargetLeft !== null || isScrolling || navLocked) {
+                return;
+            }
+            const touch = event.changedTouches[0];
+            touchStart = { x: touch.clientX, y: touch.clientY };
+        }, { passive: true });
+
+        carousel.addEventListener("touchmove", (event) => {
+            if (!touchStart) {
+                return;
+            }
+            event.preventDefault();
+        }, { passive: false });
+
+        carousel.addEventListener("touchend", (event) => {
+            if (!touchStart || navLocked) {
+                touchStart = null;
+                return;
+            }
+            const touch = event.changedTouches[0];
+            const dx = touch.clientX - touchStart.x;
+            const dy = touch.clientY - touchStart.y;
+            touchStart = null;
+            const mobile = isMobile();
+            const distance = mobile ? dy : dx;
+            if (Math.abs(distance) < 40) {
+                return;
+            }
+            event.preventDefault();
+            navLocked = true;
+            hasInteracted = true;
+            moveToAdjacentCard(distance > 0 ? 1 : -1, "smooth");
+            window.clearTimeout(wheelTimer);
+            window.clearTimeout(touchTimer);
+            touchTimer = window.setTimeout(() => {
+                navLocked = false;
+            }, 800);
+        }, { passive: false });
+
+        window.addEventListener("keydown", (event) => {
+            if (isMobile()) {
+                return;
+            }
+            if (event.target.tagName.match(/input|textarea|select/i)) {
+                return;
+            }
+            if (event.key === "ArrowLeft") {
+                event.preventDefault();
+                if (scrollTargetLeft !== null || isScrolling || navLocked) {
+                    return;
+                }
+                navLocked = true;
+                hasInteracted = true;
+                moveToAdjacentCard(-1, "smooth");
+                window.clearTimeout(wheelTimer);
+                window.clearTimeout(touchTimer);
+                wheelTimer = window.setTimeout(() => {
+                    navLocked = false;
+                }, 800);
+            } else if (event.key === "ArrowRight") {
+                event.preventDefault();
+                if (scrollTargetLeft !== null || isScrolling || navLocked) {
+                    return;
+                }
+                navLocked = true;
+                hasInteracted = true;
+                moveToAdjacentCard(1, "smooth");
+                window.clearTimeout(wheelTimer);
+                window.clearTimeout(touchTimer);
+                wheelTimer = window.setTimeout(() => {
+                    navLocked = false;
+                }, 800);
+            }
+        });
 
         window.addEventListener("resize", () => {
             if (!isMobile()) {

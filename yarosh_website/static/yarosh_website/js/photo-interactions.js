@@ -128,6 +128,23 @@
         } finally {
             button.disabled = false;
         }
+        // Зняти ховер/тач-стан з картки на мобільній через пів секунди після лайка
+        setTimeout(() => button.blur(), 500);
+    });
+
+    // Зняти фокус з кнопки коментарів при закритті колапсу, щоб ховер картки зникав
+    document.addEventListener("hidden.bs.collapse", (event) => {
+        const collapse = event.target;
+        if (
+            !(collapse instanceof HTMLElement) ||
+            !collapse.classList.contains("photo-comments")
+        ) {
+            return;
+        }
+        const trigger = document.querySelector(
+            `[aria-controls="${collapse.id}"]`,
+        );
+        trigger?.blur();
     });
 
     const commentsGrid = document.querySelector(".photo-session-grid");
