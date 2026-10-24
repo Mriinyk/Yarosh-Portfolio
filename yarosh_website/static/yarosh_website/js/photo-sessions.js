@@ -636,11 +636,29 @@
             return;
         }
         if (event.key === "Escape") {
+            closeButton.classList.add("photo-gallery-close--hovered");
             closeGallery();
+            closeButton.blur();
+            closeButton.classList.remove("photo-gallery-close--hovered");
         } else if (event.key === "ArrowLeft") {
+            previousButton.classList.add("photo-gallery-nav--hovered");
             showImage(currentIndex - 1);
         } else if (event.key === "ArrowRight") {
+            nextButton.classList.add("photo-gallery-nav--hovered");
             showImage(currentIndex + 1);
+        }
+    });
+
+    document.addEventListener("keyup", (event) => {
+        if (gallery.hidden) {
+            return;
+        }
+        if (event.key === "ArrowLeft") {
+            previousButton.classList.remove("photo-gallery-nav--hovered");
+        } else if (event.key === "ArrowRight") {
+            nextButton.classList.remove("photo-gallery-nav--hovered");
+        } else if (event.key === "Escape") {
+            closeButton.classList.remove("photo-gallery-close--hovered");
         }
     });
 

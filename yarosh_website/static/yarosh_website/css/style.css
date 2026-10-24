@@ -666,10 +666,12 @@ body.home-site .site-main {
 }
 
 .photo-gallery-close:hover,
-.photo-gallery-close:focus-visible {
+.photo-gallery-close:focus-visible,
+.photo-gallery-close--hovered {
     border-color: var(--accent);
     color: var(--accent);
     box-shadow: 0 0 1rem rgba(38, 232, 14, 0.35);
+    outline: none;
 }
 
 .photo-gallery-counter {
@@ -706,6 +708,7 @@ body.home-site .site-main {
     max-height: 85svh;
     border-radius: 0.5rem;
     object-fit: contain;
+    outline: none;
 }
 
 .photo-gallery-nav {
@@ -746,10 +749,12 @@ body.home-site .site-main {
 }
 
 .photo-gallery-nav:hover,
-.photo-gallery-nav:focus-visible {
+.photo-gallery-nav:focus-visible,
+.photo-gallery-nav--hovered {
     border-color: var(--accent);
     color: var(--accent);
     box-shadow: 0 0 1rem rgba(38, 232, 14, 0.35);
+    outline: none;
 }
 
 html[data-theme="dark"] .photo-session-card {
