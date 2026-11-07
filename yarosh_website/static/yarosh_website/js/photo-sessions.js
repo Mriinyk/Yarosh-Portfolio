@@ -529,7 +529,7 @@
         status.textContent = "";
     };
 
-    const animateGalleryOpen = (trigger) => {
+    const animateGalleryOpen = (trigger, decoded = false) => {
         if (gallery.hidden) {
             image.classList.remove("photo-gallery-image--opening");
             return;
@@ -544,6 +544,18 @@
         }
         if (!image.complete || !image.naturalWidth) {
             image.addEventListener("load", () => animateGalleryOpen(trigger), { once: true });
+            return;
+        }
+        if (!decoded && typeof image.decode === "function") {
+            const imageUrl = image.currentSrc || image.src;
+            image.decode().then(
+                () => {
+                    if ((image.currentSrc || image.src) === imageUrl) {
+                        animateGalleryOpen(trigger, true);
+                    }
+                },
+                () => animateGalleryOpen(trigger, true),
+            );
             return;
         }
 
@@ -671,6 +683,7 @@
             document.body.style.paddingRight = `${currentPadding + scrollbarWidth}px`;
         }
         document.body.style.overflow = "hidden";
+        document.body.classList.add("photo-gallery-open");
         gallery.classList.add("photo-gallery-modal--opening");
         gallery.hidden = false;
         void gallery.offsetWidth;
@@ -713,13 +726,18 @@
     };
 
     const finishCloseGallery = ({ pointerInitiated = false } = {}) => {
-        gallery.classList.remove("photo-gallery-modal--opening", "photo-gallery-modal--closing");
+        gallery.classList.remove(
+            "photo-gallery-modal--opening",
+            "photo-gallery-modal--closing",
+            "photo-gallery-modal--returning",
+        );
         gallery.hidden = true;
         image.hidden = true;
         image.removeAttribute("src");
         galleryClosing = false;
         document.body.style.overflow = previousBodyOverflow;
         document.body.style.paddingRight = previousBodyPaddingRight;
+        document.body.classList.remove("photo-gallery-open");
         waitForMobileScrollToResume();
         if (activeTrigger) {
             const activeCard = activeTrigger.closest(".photo-work-card");
@@ -739,19 +757,29 @@
                             "pointerleave",
                             clearDismissedState,
                         );
+                    } else {
+                        activeCard.classList.remove("is-gallery-dismissed");
                     }
                 } else {
                     activeCard.classList.add("is-gallery-dismissed");
                     const clearOnFocusLeave = (event) => {
-                        if (!activeCard.contains(event.relatedTarget)) {
+                        if (
+                            event.type === "pointerenter"
+                            || !activeCard.contains(event.relatedTarget)
+                        ) {
                             activeCard.classList.remove("is-gallery-dismissed");
                             activeCard.removeEventListener(
                                 "focusout",
                                 clearOnFocusLeave,
                             );
+                            activeCard.removeEventListener(
+                                "pointerenter",
+                                clearOnFocusLeave,
+                            );
                         }
                     };
                     activeCard.addEventListener("focusout", clearOnFocusLeave);
+                    activeCard.addEventListener("pointerenter", clearOnFocusLeave);
                     activeTrigger.focus({ preventScroll: true });
                 }
             }
@@ -819,6 +847,10 @@
                     pointerEvents: "none",
                 });
                 document.body.appendChild(flightImage);
+                // The traveling clone now carries the image back to its cover.
+                // Hide the stationary gallery copy immediately to prevent a
+                // second, fading image from lingering in the center.
+                gallery.classList.add("photo-gallery-modal--returning");
                 void flightImage.offsetWidth;
                 requestAnimationFrame(() => {
                     if (!galleryClosing) {

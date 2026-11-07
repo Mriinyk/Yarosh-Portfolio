@@ -60,17 +60,14 @@ html[data-theme="dark"] select:focus {
 
 @supports (view-transition-name: root) {
     @media (prefers-reduced-motion: no-preference) {
-        ::view-transition-old(root),
-        ::view-transition-new(root) {
-            transform: translateZ(0);
-            will-change: clip-path;
-        }
-
         ::view-transition-old(root) {
             animation: none;
         }
 
         ::view-transition-new(root) {
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            will-change: clip-path;
             animation: theme-wave-reveal 1400ms cubic-bezier(0.4, 0.05, 0.2, 1) both;
         }
 
@@ -90,7 +87,10 @@ body {
     min-height: 100vh;
     background: var(--page-background);
     color: var(--nav-ink);
-    transition: background-color 1000ms ease, color 1000ms ease;
+}
+
+html.theme-fallback-transition body {
+    transition: background-color 420ms ease, color 420ms ease;
 }
 
 @font-face {
@@ -117,8 +117,8 @@ body {
     border-radius: 1.5rem;
     background: var(--nav-glass);
     box-shadow: var(--nav-shadow);
-    -webkit-backdrop-filter: blur(14px);
-    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
 }
 
 .site-navbar-top {
@@ -629,6 +629,14 @@ body.home-site .site-main {
     display: none;
 }
 
+/* The gallery supplies its own full-screen blur, so avoid stacking the
+   navbar/search glass filters beneath it while the modal is active. */
+body.photo-gallery-open .site-navbar,
+body.photo-gallery-open .photos-search input {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+
 .photo-gallery-modal {
     position: fixed;
     z-index: 2000;
@@ -645,6 +653,7 @@ body.home-site .site-main {
     position: absolute;
     z-index: 0;
     inset: 0;
+    background: rgba(8, 10, 9, 0.94);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     content: "";
@@ -652,26 +661,21 @@ body.home-site .site-main {
     transition: opacity 420ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
-.photo-gallery-modal::after {
-    position: absolute;
-    z-index: 0;
-    inset: 0;
-    background: rgba(8, 10, 9, 0.94);
-    content: "";
-    pointer-events: none;
-    transition: opacity 420ms cubic-bezier(0.22, 0.61, 0.36, 1);
+@media (min-width: 768px) {
+    .photo-gallery-modal::before {
+        /* A smaller backdrop kernel keeps the full-screen blur cheaper on desktop GPUs. */
+        -webkit-backdrop-filter: blur(6px);
+        backdrop-filter: blur(6px);
+    }
 }
 
 .photo-gallery-modal--opening::before,
-.photo-gallery-modal--closing::before,
-.photo-gallery-modal--opening::after,
-.photo-gallery-modal--closing::after {
+.photo-gallery-modal--closing::before {
     opacity: 0;
     will-change: opacity;
 }
 
-.photo-gallery-modal--closing::before,
-.photo-gallery-modal--closing::after {
+.photo-gallery-modal--closing::before {
     transition-duration: 760ms;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -824,6 +828,11 @@ body.home-site .site-main {
     opacity: 0;
 }
 
+.photo-gallery-modal--returning .photo-gallery-viewer > img {
+    opacity: 0 !important;
+    transition: none !important;
+}
+
 .photo-gallery-viewer img.photo-gallery-image--fade-in {
     animation: photo-gallery-image-fade-in 720ms cubic-bezier(0.4, 0, 0.2, 1) both;
 }
@@ -850,7 +859,6 @@ body.home-site .site-main {
 
 @media (prefers-reduced-motion: reduce) {
     .photo-gallery-modal::before,
-    .photo-gallery-modal::after,
     .photo-gallery-close,
     .photo-gallery-counter,
     .photo-gallery-status,
@@ -896,7 +904,6 @@ body.home-site .site-main {
 
 @media (prefers-reduced-motion: reduce) {
     .photo-gallery-modal--closing::before,
-    .photo-gallery-modal--closing::after,
     .photo-gallery-modal--closing .photo-gallery-close,
     .photo-gallery-modal--closing .photo-gallery-counter,
     .photo-gallery-modal--closing .photo-gallery-status,
@@ -996,8 +1003,8 @@ html[data-theme="dark"] .photo-session-card.is-centered:hover {
     border-radius: 1.5rem;
     background: var(--auth-glass);
     box-shadow: var(--auth-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.22);
-    -webkit-backdrop-filter: blur(14px);
-    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
 }
 
 .biography-photo::before {
@@ -1262,8 +1269,8 @@ body.auth-site .site-main {
     border-radius: 1.5rem;
     background: var(--auth-glass);
     box-shadow: var(--auth-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.22);
-    -webkit-backdrop-filter: blur(14px);
-    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
     transform-origin: center;
     animation: auth-fade-in 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
@@ -1853,8 +1860,8 @@ html[data-theme="dark"] .auth-link {
     box-shadow: 0 0.65rem 2rem rgba(20, 28, 20, 0.055);
     color: var(--nav-ink);
     transition: border-color 180ms ease, box-shadow 180ms ease;
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
 }
 
 .photos-search input:focus {
@@ -2430,8 +2437,8 @@ html[data-theme="dark"] .photo-comments-login a {
     background: var(--auth-glass);
     box-shadow: var(--auth-shadow);
     color: var(--nav-ink);
-    -webkit-backdrop-filter: blur(16px);
-    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
 }
 
 .photo-share-heading {
@@ -2555,8 +2562,8 @@ html[data-theme="dark"] .photo-comments-login a {
     place-items: center;
     transition: box-shadow 180ms ease, transform 180ms ease;
     will-change: transform;
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
 }
 
 .photo-admin-add:hover {
@@ -2599,8 +2606,8 @@ html[data-theme="light"] .photo-admin-add:hover svg {
     box-shadow:
         0 0.3rem 1rem rgba(20, 28, 20, 0.025),
         0 1.2rem 3rem rgba(20, 28, 20, 0.05);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
 }
 
 .site-footer-stats {
@@ -2663,8 +2670,8 @@ html[data-theme="light"] .photo-admin-add:hover svg {
     border-radius: 1.4rem;
     background: var(--auth-glass);
     box-shadow: var(--auth-shadow);
-    -webkit-backdrop-filter: blur(14px);
-    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
 }
 
 .photo-editor-card h1 {
@@ -2775,8 +2782,8 @@ html[data-theme="light"] .photo-admin-add:hover svg {
     color: var(--nav-ink);
     font-size: 0.78rem;
     text-align: center;
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
 }
 
 .photo-auth-hint a {
@@ -2907,8 +2914,8 @@ html[data-theme="dark"] .photo-work-card:not(.is-gallery-dismissed):focus-within
     border-radius: 1.5rem;
     background: var(--nav-glass);
     box-shadow: var(--nav-shadow);
-    -webkit-backdrop-filter: blur(14px);
-    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
 }
 
 .photo-share-links a {

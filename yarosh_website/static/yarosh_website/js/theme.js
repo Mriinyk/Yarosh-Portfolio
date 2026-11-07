@@ -25,6 +25,7 @@ function applyTheme(theme) {
 }
 
 const TAP_FLASH_FALLBACK_DURATION = 800;
+let themeTransitionRunning = false;
 
 function clearThemeToggleFlash(button) {
     if (button.dataset.tapFlashTimer) {
@@ -53,6 +54,9 @@ function flashThemeToggle(button, onAnimationEnd) {
 }
 
 function toggleTheme(button) {
+    if (themeTransitionRunning) {
+        return;
+    }
     const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
     const bounds = button.getBoundingClientRect();
     const originX = bounds.left + bounds.width / 2;
@@ -70,7 +74,12 @@ function toggleTheme(button) {
         typeof document.startViewTransition === "function"
         && !window.matchMedia("(prefers-reduced-motion: reduce)").matches
     ) {
+        themeTransitionRunning = true;
         const transition = document.startViewTransition(() => applyTheme(nextTheme));
+        transition.finished.then(
+            () => { themeTransitionRunning = false; },
+            () => { themeTransitionRunning = false; },
+        );
         flashThemeToggle(button, (done) => {
             transition.finished.then(done, done);
         });
@@ -78,7 +87,16 @@ function toggleTheme(button) {
     }
 
     flashThemeToggle(button);
+    const useFallbackFade = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (useFallbackFade) {
+        document.documentElement.classList.add("theme-fallback-transition");
+    }
     applyTheme(nextTheme);
+    if (useFallbackFade) {
+        window.setTimeout(() => {
+            document.documentElement.classList.remove("theme-fallback-transition");
+        }, 450);
+    }
 }
 
 document.addEventListener("DOMContentLoaded", updateThemeToggle);
