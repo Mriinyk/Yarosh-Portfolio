@@ -30,6 +30,8 @@
     let touchStartActive = null;
     let touchJustCentered = false;
     let scrollLocked = false;
+    let centerAnimationFrame = null;
+    let gridAnimationTimer = null;
 
     const hrefOf = (link) => link.getAttribute("href") || "";
 
@@ -150,9 +152,39 @@
         if (!scrollable || !link) {
             return;
         }
+        if (centerAnimationFrame !== null) {
+            window.cancelAnimationFrame(centerAnimationFrame);
+            centerAnimationFrame = null;
+        }
+        const targetLeft = Math.max(0, centerTargetFor(link));
         scrollLocked = true;
-        window.setTimeout(() => { scrollLocked = false; }, 300);
-        nav.scrollTo({ left: Math.max(0, centerTargetFor(link)), behavior });
+        if (behavior === "instant" || prefersReducedMotion()) {
+            nav.scrollLeft = targetLeft;
+            window.setTimeout(() => { scrollLocked = false; }, 80);
+            return;
+        }
+
+        const startLeft = nav.scrollLeft;
+        const distance = targetLeft - startLeft;
+        const duration = 620;
+        let startTime = null;
+        const animateCenter = (time) => {
+            if (startTime === null) {
+                startTime = time;
+            }
+            const progress = Math.min((time - startTime) / duration, 1);
+            const eased = progress < 0.5
+                ? 4 * progress * progress * progress
+                : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+            nav.scrollLeft = startLeft + distance * eased;
+            if (progress < 1) {
+                centerAnimationFrame = window.requestAnimationFrame(animateCenter);
+                return;
+            }
+            centerAnimationFrame = null;
+            scrollLocked = false;
+        };
+        centerAnimationFrame = window.requestAnimationFrame(animateCenter);
     };
 
     const build = () => {
@@ -298,7 +330,25 @@
                 throw new Error("У відповіді немає сітки фотосесій.");
             }
             // Reuse the grid node so delegated comment handlers keep working.
+            grid.classList.add("is-swapping-out");
+            await new Promise((resolve) => window.setTimeout(resolve, 180));
+            if (version !== fetchVersion) {
+                grid.classList.remove("is-swapping-out");
+                return;
+            }
             grid.innerHTML = nextGrid.innerHTML;
+            grid.classList.remove("is-swapping-out");
+            grid.classList.add("is-swapping-in");
+            window.clearTimeout(gridAnimationTimer);
+            grid.querySelectorAll(".photo-work-card").forEach((card, index) => {
+                card.style.setProperty("--entry-index", index);
+            });
+            gridAnimationTimer = window.setTimeout(() => {
+                grid.classList.remove("is-swapping-in");
+                grid.querySelectorAll(".photo-work-card").forEach((card) => {
+                    card.style.removeProperty("--entry-index");
+                });
+            }, 800);
             syncSidePanels(doc);
             syncSearchType(url);
             document.dispatchEvent(new CustomEvent("photos:grid-updated"));
