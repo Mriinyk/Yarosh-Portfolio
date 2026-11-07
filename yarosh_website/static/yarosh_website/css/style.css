@@ -639,6 +639,10 @@ body.home-site .site-main {
     backdrop-filter: blur(10px);
 }
 
+.photo-gallery-modal:focus {
+    outline: none;
+}
+
 .photo-gallery-close {
     position: absolute;
     z-index: 2;
@@ -1877,6 +1881,10 @@ html[data-theme="dark"] .auth-link {
     border-radius: 0.8rem;
     background: rgba(36, 40, 36, 0.12);
     cursor: pointer;
+}
+
+.photo-work-cover:focus {
+    outline: none;
 }
 
 .photo-work-cover img {

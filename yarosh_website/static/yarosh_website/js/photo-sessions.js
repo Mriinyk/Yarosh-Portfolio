@@ -520,7 +520,10 @@
         previousBodyOverflow = document.body.style.overflow;
         document.body.style.overflow = "hidden";
         gallery.hidden = false;
-        closeButton.focus();
+        // Keep keyboard focus on the dialog while it is open. Focusing the
+        // close button here activates its focus-visible styling even when the
+        // user is only navigating photos with the arrow keys.
+        gallery.focus({ preventScroll: true });
 
         const preloaded = preloadedImages.get(trigger.dataset.galleryUrl);
         if (preloaded) {
@@ -554,6 +557,9 @@
 
     const closeGallery = ({ pointerInitiated = false } = {}) => {
         requestVersion += 1;
+        closeButton.classList.remove("photo-gallery-close--hovered");
+        previousButton.classList.remove("photo-gallery-nav--hovered");
+        nextButton.classList.remove("photo-gallery-nav--hovered");
         gallery.hidden = true;
         image.hidden = true;
         image.removeAttribute("src");
