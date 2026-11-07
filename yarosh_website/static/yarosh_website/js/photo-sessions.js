@@ -402,6 +402,11 @@
         }, { passive: false });
 
         window.addEventListener("keydown", (event) => {
+            // Arrow keys belong to the open gallery while it is active.
+            // Do not let them also navigate the "New photos" carousel behind it.
+            if (gallery && !gallery.hidden) {
+                return;
+            }
             if (isMobile()) {
                 return;
             }
@@ -463,14 +468,53 @@
     let touchStartX = null;
     let previousBodyOverflow = "";
     let preloadedImages = new Map();
+    const navHighlightTimers = new Map();
 
-    const showImage = (index) => {
+    const highlightNavigationButton = (button) => {
+        button.classList.add("photo-gallery-nav--hovered");
+        window.clearTimeout(navHighlightTimers.get(button));
+        navHighlightTimers.set(button, window.setTimeout(() => {
+            button.classList.remove("photo-gallery-nav--hovered");
+            navHighlightTimers.delete(button);
+        }, 1300));
+    };
+
+    const showImage = (index, direction = 0) => {
         if (!images.length) {
             return;
         }
         currentIndex = (index + images.length) % images.length;
+        const imageUrl = images[currentIndex];
+        viewer.querySelectorAll(".photo-gallery-image--outgoing").forEach((outgoingImage) => {
+            outgoingImage.remove();
+        });
+        image.classList.remove("photo-gallery-image--fade-in");
+        if (direction && !image.hidden && image.complete && image.naturalWidth) {
+            const outgoingImage = image.cloneNode();
+            outgoingImage.removeAttribute("id");
+            outgoingImage.setAttribute("aria-hidden", "true");
+            outgoingImage.classList.remove("photo-gallery-image--fade-in");
+            outgoingImage.classList.add("photo-gallery-image--outgoing");
+            viewer.insertBefore(outgoingImage, image);
+            window.setTimeout(() => outgoingImage.remove(), 760);
+        }
         image.hidden = false;
-        image.src = images[currentIndex];
+        image.src = imageUrl;
+        if (direction) {
+            const animateImage = () => {
+                if (image.src !== imageUrl || gallery.hidden) {
+                    return;
+                }
+                image.classList.remove("photo-gallery-image--fade-in");
+                void image.offsetWidth;
+                image.classList.add("photo-gallery-image--fade-in");
+            };
+            if (image.complete && image.naturalWidth) {
+                animateImage();
+            } else {
+                image.addEventListener("load", animateImage, { once: true });
+            }
+        }
         counter.textContent = `${currentIndex + 1} / ${images.length}`;
         status.textContent = "";
     };
@@ -560,6 +604,11 @@
         closeButton.classList.remove("photo-gallery-close--hovered");
         previousButton.classList.remove("photo-gallery-nav--hovered");
         nextButton.classList.remove("photo-gallery-nav--hovered");
+        navHighlightTimers.forEach((timer) => window.clearTimeout(timer));
+        navHighlightTimers.clear();
+        viewer.querySelectorAll(".photo-gallery-image--outgoing").forEach((outgoingImage) => {
+            outgoingImage.remove();
+        });
         gallery.hidden = true;
         image.hidden = true;
         image.removeAttribute("src");
@@ -613,8 +662,11 @@
     closeButton.addEventListener("click", (event) => {
         closeGallery({ pointerInitiated: event.detail > 0 });
     });
-    previousButton.addEventListener("click", () => showImage(currentIndex - 1));
-    nextButton.addEventListener("click", () => showImage(currentIndex + 1));
+    previousButton.addEventListener("click", () => showImage(currentIndex - 1, -1));
+    nextButton.addEventListener("click", () => showImage(currentIndex + 1, 1));
+    [previousButton, nextButton].forEach((button) => {
+        button.addEventListener("pointerdown", () => highlightNavigationButton(button));
+    });
     gallery.addEventListener("click", (event) => {
         if (event.target === gallery || event.target === viewer) {
             closeGallery({ pointerInitiated: event.detail > 0 });
@@ -634,7 +686,8 @@
         const distance = event.changedTouches[0].clientX - touchStartX;
         touchStartX = null;
         if (Math.abs(distance) > 45) {
-            showImage(currentIndex + (distance < 0 ? 1 : -1));
+            const direction = distance < 0 ? 1 : -1;
+            showImage(currentIndex + direction, direction);
         }
     }, { passive: true });
     document.addEventListener("keydown", (event) => {
@@ -647,11 +700,11 @@
             closeButton.blur();
             closeButton.classList.remove("photo-gallery-close--hovered");
         } else if (event.key === "ArrowLeft") {
-            previousButton.classList.add("photo-gallery-nav--hovered");
-            showImage(currentIndex - 1);
+            highlightNavigationButton(previousButton);
+            showImage(currentIndex - 1, -1);
         } else if (event.key === "ArrowRight") {
-            nextButton.classList.add("photo-gallery-nav--hovered");
-            showImage(currentIndex + 1);
+            highlightNavigationButton(nextButton);
+            showImage(currentIndex + 1, 1);
         }
     });
 
@@ -659,11 +712,7 @@
         if (gallery.hidden) {
             return;
         }
-        if (event.key === "ArrowLeft") {
-            previousButton.classList.remove("photo-gallery-nav--hovered");
-        } else if (event.key === "ArrowRight") {
-            nextButton.classList.remove("photo-gallery-nav--hovered");
-        } else if (event.key === "Escape") {
+        if (event.key === "Escape") {
             closeButton.classList.remove("photo-gallery-close--hovered");
         }
     });
