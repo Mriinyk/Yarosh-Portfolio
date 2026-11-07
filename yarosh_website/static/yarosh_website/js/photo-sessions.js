@@ -467,7 +467,12 @@
     let requestVersion = 0;
     let touchStartX = null;
     let previousBodyOverflow = "";
+    let previousBodyPaddingRight = "";
     let preloadedImages = new Map();
+    let galleryFlightImage = null;
+    let galleryFlightTimer = null;
+    let galleryClosing = false;
+    let galleryCloseTimer = null;
     const navHighlightTimers = new Map();
 
     const highlightNavigationButton = (button) => {
@@ -480,7 +485,7 @@
     };
 
     const showImage = (index, direction = 0) => {
-        if (!images.length) {
+        if (!images.length || galleryClosing) {
             return;
         }
         currentIndex = (index + images.length) % images.length;
@@ -508,6 +513,11 @@
                 image.classList.remove("photo-gallery-image--fade-in");
                 void image.offsetWidth;
                 image.classList.add("photo-gallery-image--fade-in");
+                image.addEventListener("animationend", () => {
+                    if (image.src === imageUrl) {
+                        image.classList.remove("photo-gallery-image--fade-in");
+                    }
+                }, { once: true });
             };
             if (image.complete && image.naturalWidth) {
                 animateImage();
@@ -517,6 +527,97 @@
         }
         counter.textContent = `${currentIndex + 1} / ${images.length}`;
         status.textContent = "";
+    };
+
+    const animateGalleryOpen = (trigger) => {
+        if (gallery.hidden) {
+            image.classList.remove("photo-gallery-image--opening");
+            return;
+        }
+        window.clearTimeout(galleryFlightTimer);
+        galleryFlightImage?.remove();
+        galleryFlightImage = null;
+        const cover = trigger.querySelector("img");
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || !cover) {
+            image.classList.remove("photo-gallery-image--opening");
+            return;
+        }
+        if (!image.complete || !image.naturalWidth) {
+            image.addEventListener("load", () => animateGalleryOpen(trigger), { once: true });
+            return;
+        }
+
+        const start = cover.getBoundingClientRect();
+        const end = image.getBoundingClientRect();
+        if (!start.width || !start.height || !end.width || !end.height) {
+            image.classList.remove("photo-gallery-image--opening");
+            return;
+        }
+
+        const flightImage = cover.cloneNode();
+        flightImage.removeAttribute("id");
+        flightImage.setAttribute("aria-hidden", "true");
+        Object.assign(flightImage.style, {
+            position: "fixed",
+            zIndex: "2001",
+            top: `${start.top}px`,
+            left: `${start.left}px`,
+            width: `${start.width}px`,
+            height: `${start.height}px`,
+            display: "block",
+            maxWidth: "none",
+            maxHeight: "none",
+            margin: "0",
+            objectFit: "cover",
+            borderRadius: getComputedStyle(cover).borderRadius,
+            transformOrigin: "top left",
+            transition: "transform 680ms cubic-bezier(0.22, 1, 0.36, 1), opacity 300ms ease",
+            opacity: "1",
+            willChange: "transform, opacity",
+            pointerEvents: "none",
+        });
+        document.body.appendChild(flightImage);
+        galleryFlightImage = flightImage;
+        let flightFinished = false;
+        const finishFlight = () => {
+            if (flightFinished) {
+                return;
+            }
+            flightFinished = true;
+            window.clearTimeout(galleryFlightTimer);
+            if (gallery.hidden) {
+                flightImage.remove();
+                return;
+            }
+            // Reveal the already-loaded full-size image underneath the flight
+            // layer before fading that layer away. This avoids a black gap on
+            // mobile browsers while their compositor catches up.
+            image.classList.add("photo-gallery-image--ready");
+            image.classList.remove("photo-gallery-image--opening");
+            void image.offsetWidth;
+            requestAnimationFrame(() => image.classList.remove("photo-gallery-image--ready"));
+            flightImage.style.opacity = "0";
+            galleryFlightTimer = window.setTimeout(() => {
+                flightImage.remove();
+                if (galleryFlightImage === flightImage) {
+                    galleryFlightImage = null;
+                }
+            }, 320);
+        };
+        flightImage.addEventListener("transitionend", (event) => {
+            if (event.propertyName === "transform") {
+                finishFlight();
+            }
+        });
+        void flightImage.offsetWidth;
+        requestAnimationFrame(() => {
+            if (gallery.hidden) {
+                flightImage.remove();
+                return;
+            }
+            flightImage.style.transform = `translate(${end.left - start.left}px, ${end.top - start.top}px) scale(${end.width / start.width}, ${end.height / start.height})`;
+        });
+        galleryFlightTimer = window.setTimeout(finishFlight, 820);
     };
 
     // Завантажуємо списки зображень усіх галерей одразу після прогрузки сторінки,
@@ -558,12 +659,22 @@
         const thisRequest = requestVersion;
         image.hidden = true;
         image.removeAttribute("src");
+        image.classList.add("photo-gallery-image--opening");
         counter.textContent = "";
         status.textContent = "Завантаження галереї…";
         pauseMobileCarouselFocus();
         previousBodyOverflow = document.body.style.overflow;
+        previousBodyPaddingRight = document.body.style.paddingRight;
+        const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+        if (scrollbarWidth > 0) {
+            const currentPadding = parseFloat(getComputedStyle(document.body).paddingRight) || 0;
+            document.body.style.paddingRight = `${currentPadding + scrollbarWidth}px`;
+        }
         document.body.style.overflow = "hidden";
+        gallery.classList.add("photo-gallery-modal--opening");
         gallery.hidden = false;
+        void gallery.offsetWidth;
+        requestAnimationFrame(() => gallery.classList.remove("photo-gallery-modal--opening"));
         // Keep keyboard focus on the dialog while it is open. Focusing the
         // close button here activates its focus-visible styling even when the
         // user is only navigating photos with the arrow keys.
@@ -573,6 +684,7 @@
         if (preloaded) {
             images = preloaded;
             showImage(0);
+            animateGalleryOpen(trigger);
             return;
         }
 
@@ -592,6 +704,7 @@
             }
             images = result.images;
             showImage(0);
+            animateGalleryOpen(trigger);
         } catch (error) {
             if (thisRequest === requestVersion && !gallery.hidden) {
                 status.textContent = error.message || "Не вдалося завантажити галерею.";
@@ -599,20 +712,14 @@
         }
     };
 
-    const closeGallery = ({ pointerInitiated = false } = {}) => {
-        requestVersion += 1;
-        closeButton.classList.remove("photo-gallery-close--hovered");
-        previousButton.classList.remove("photo-gallery-nav--hovered");
-        nextButton.classList.remove("photo-gallery-nav--hovered");
-        navHighlightTimers.forEach((timer) => window.clearTimeout(timer));
-        navHighlightTimers.clear();
-        viewer.querySelectorAll(".photo-gallery-image--outgoing").forEach((outgoingImage) => {
-            outgoingImage.remove();
-        });
+    const finishCloseGallery = ({ pointerInitiated = false } = {}) => {
+        gallery.classList.remove("photo-gallery-modal--opening", "photo-gallery-modal--closing");
         gallery.hidden = true;
         image.hidden = true;
         image.removeAttribute("src");
+        galleryClosing = false;
         document.body.style.overflow = previousBodyOverflow;
+        document.body.style.paddingRight = previousBodyPaddingRight;
         waitForMobileScrollToResume();
         if (activeTrigger) {
             const activeCard = activeTrigger.closest(".photo-work-card");
@@ -649,6 +756,89 @@
                 }
             }
         }
+    };
+
+    const closeGallery = ({ pointerInitiated = false } = {}) => {
+        if (gallery.hidden || galleryClosing) {
+            return;
+        }
+        galleryClosing = true;
+        requestVersion += 1;
+        closeButton.classList.remove("photo-gallery-close--hovered");
+        previousButton.classList.remove("photo-gallery-nav--hovered");
+        nextButton.classList.remove("photo-gallery-nav--hovered");
+        navHighlightTimers.forEach((timer) => window.clearTimeout(timer));
+        navHighlightTimers.clear();
+        gallery.classList.remove("photo-gallery-modal--opening");
+        image.classList.remove("photo-gallery-image--opening");
+        image.classList.remove("photo-gallery-image--fade-in");
+        window.clearTimeout(galleryFlightTimer);
+        image.classList.remove("photo-gallery-image--ready");
+        galleryFlightImage?.remove();
+        galleryFlightImage = null;
+        viewer.querySelectorAll(".photo-gallery-image--outgoing").forEach((outgoingImage) => {
+            outgoingImage.remove();
+        });
+
+        const activeCard = activeTrigger?.closest(".photo-work-card");
+        if (activeCard) {
+            activeCard.classList.add("is-gallery-dismissed", "is-gallery-returning");
+            void activeCard.offsetWidth;
+        }
+        const cover = activeTrigger?.querySelector("img");
+        const returnToCover = currentIndex === 0 && image.complete && image.naturalWidth && cover;
+        gallery.classList.add("photo-gallery-modal--closing");
+        let closeDuration = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+            ? 0
+            : 820;
+
+        if (returnToCover && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            const start = image.getBoundingClientRect();
+            const end = cover.getBoundingClientRect();
+            if (start.width && start.height && end.width && end.height) {
+                const flightImage = image.cloneNode();
+                flightImage.classList.remove("photo-gallery-image--opening", "photo-gallery-image--fade-in");
+                flightImage.removeAttribute("id");
+                flightImage.setAttribute("aria-hidden", "true");
+                Object.assign(flightImage.style, {
+                    position: "fixed",
+                    zIndex: "2001",
+                    top: `${start.top}px`,
+                    left: `${start.left}px`,
+                    width: `${start.width}px`,
+                    height: `${start.height}px`,
+                    display: "block",
+                    maxWidth: "none",
+                    maxHeight: "none",
+                    margin: "0",
+                    objectFit: "cover",
+                    borderRadius: "0.5rem",
+                    transformOrigin: "top left",
+                    transition: "transform 680ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease",
+                    willChange: "transform, opacity",
+                    pointerEvents: "none",
+                });
+                document.body.appendChild(flightImage);
+                void flightImage.offsetWidth;
+                requestAnimationFrame(() => {
+                    if (!galleryClosing) {
+                        flightImage.remove();
+                        return;
+                    }
+                    flightImage.style.transform = `translate(${end.left - start.left}px, ${end.top - start.top}px) scale(${end.width / start.width}, ${end.height / start.height})`;
+                });
+                window.setTimeout(() => { flightImage.style.opacity = "0"; }, 500);
+                closeDuration = 820;
+                galleryFlightImage = flightImage;
+            }
+        }
+
+        galleryCloseTimer = window.setTimeout(() => {
+            galleryFlightImage?.remove();
+            galleryFlightImage = null;
+            activeCard?.classList.remove("is-gallery-returning");
+            finishCloseGallery({ pointerInitiated });
+        }, closeDuration);
     };
 
     // Delegate to the document so cards replaced by the category carousel
@@ -691,7 +881,7 @@
         }
     }, { passive: true });
     document.addEventListener("keydown", (event) => {
-        if (gallery.hidden) {
+        if (gallery.hidden || galleryClosing) {
             return;
         }
         if (event.key === "Escape") {
@@ -709,7 +899,7 @@
     });
 
     document.addEventListener("keyup", (event) => {
-        if (gallery.hidden) {
+        if (gallery.hidden || galleryClosing) {
             return;
         }
         if (event.key === "Escape") {
