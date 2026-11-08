@@ -94,9 +94,9 @@ html.theme-fallback-transition body {
 }
 
 @font-face {
-    font-family: "Yarosh Oleksandra";
-    src: url("../fonts/LHANDW.TTF") format("truetype");
-    font-style: normal;
+    font-family: "Radley";
+    src: url("../fonts/Radley-Italic.ttf") format("truetype");
+    font-style: italic;
     font-weight: 400;
     font-display: swap;
 }
@@ -421,8 +421,9 @@ body.home-site .site-main {
     margin: 0;
     padding: 1rem;
     color: #fff;
-    font-family: "Yarosh Oleksandra", cursive;
-    font-size: clamp(2.5rem, 7vw, 6rem);
+    font-family: "Radley", cursive;
+    font-style: italic;
+    font-size: clamp(3.75rem, 10.5vw, 9rem);
     font-weight: 400;
     line-height: 1.05;
     text-align: center;
@@ -1111,7 +1112,7 @@ html[data-theme="dark"] .photo-session-card.is-centered:hover {
     .hero-title {
         max-width: 100%;
         padding: 0.75rem;
-        font-size: clamp(2rem, 9vw, 3.75rem);
+        font-size: clamp(3rem, 13.5vw, 5.625rem);
     }
 
     .photo-sessions-section {
@@ -1243,7 +1244,7 @@ html[data-theme="dark"] .photo-session-card.is-centered:hover {
     }
 
     .hero-title {
-        font-size: clamp(1.8rem, 6vw, 3rem);
+        font-size: clamp(2.7rem, 9vw, 4.5rem);
     }
 }
 
