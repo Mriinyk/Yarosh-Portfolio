@@ -2043,6 +2043,7 @@ html[data-theme="dark"] .auth-link {
     min-width: 0;
     padding: 0.85rem;
     overflow: hidden;
+    cursor: pointer;
     border: 1px solid var(--auth-border);
     border-radius: 1.2rem;
     background: color-mix(in srgb, var(--auth-glass) 70%, transparent);

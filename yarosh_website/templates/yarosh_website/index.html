@@ -33,9 +33,9 @@
                  aria-label="Карусель нових фотосесій">
                 {% for photo_session in photo_sessions %}
                     <article class="photo-session-card" data-session-card
-                             data-session-id="{{ photo_session.pk }}">
+                             data-session-id="{{ photo_session.pk }}"
+                             data-gallery-url="{% url 'photo_session_gallery' photo_session.pk %}">
                         <button class="photo-session-cover" type="button"
-                                data-gallery-url="{% url 'photo_session_gallery' photo_session.pk %}"
                                 aria-label="Відкрити альбом: {{ photo_session.title }}">
                             <img src="{{ photo_session.direct_cover_url }}"
                                  alt="Обкладинка фотосесії {{ photo_session.title }}"

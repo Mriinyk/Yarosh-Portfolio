@@ -666,7 +666,16 @@
     };
 
     const openGallery = async (trigger) => {
-        activeTrigger = trigger;
+        const coverTrigger = trigger.matches(
+            ".photo-work-card, .photo-session-card",
+        )
+            ? trigger.querySelector(".photo-work-cover, .photo-session-cover")
+            : trigger;
+        const galleryUrl = trigger.dataset.galleryUrl;
+        if (!coverTrigger || !galleryUrl) {
+            return;
+        }
+        activeTrigger = coverTrigger;
         images = [];
         currentIndex = 0;
         requestVersion += 1;
@@ -695,16 +704,16 @@
         // user is only navigating photos with the arrow keys.
         gallery.focus({ preventScroll: true });
 
-        const preloaded = preloadedImages.get(trigger.dataset.galleryUrl);
+        const preloaded = preloadedImages.get(galleryUrl);
         if (preloaded) {
             images = preloaded;
             showImage(0);
-            animateGalleryOpen(trigger);
+            animateGalleryOpen(coverTrigger);
             return;
         }
 
         try {
-            const response = await fetch(trigger.dataset.galleryUrl, {
+            const response = await fetch(galleryUrl, {
                 headers: { Accept: "application/json" },
             });
             const result = await response.json();
@@ -719,7 +728,7 @@
             }
             images = result.images;
             showImage(0);
-            animateGalleryOpen(trigger);
+            animateGalleryOpen(coverTrigger);
         } catch (error) {
             if (thisRequest === requestVersion && !gallery.hidden) {
                 status.textContent = error.message || "Не вдалося завантажити галерею.";
@@ -879,9 +888,19 @@
     // keep opening the gallery without re-binding individual triggers.
     document.addEventListener("click", (event) => {
         const trigger = event.target.closest?.("[data-gallery-url]");
-        if (trigger) {
-            openGallery(trigger);
+        if (!trigger) {
+            return;
         }
+        const control = event.target.closest?.(
+            "button, a, input, select, textarea, [role='button']",
+        );
+        const isCoverButton = control?.matches(
+            ".photo-work-cover, .photo-session-cover",
+        );
+        if (control && !isCoverButton) {
+            return;
+        }
+        openGallery(trigger);
     });
     closeButton.addEventListener("click", (event) => {
         closeGallery({ pointerInitiated: event.detail > 0 });

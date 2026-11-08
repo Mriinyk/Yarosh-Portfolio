@@ -61,10 +61,23 @@ function toggleTheme(button) {
     const bounds = button.getBoundingClientRect();
     const originX = bounds.left + bounds.width / 2;
     const originY = bounds.top + bounds.height / 2;
-    const revealRadius = Math.hypot(
-        Math.max(originX, window.innerWidth - originX),
-        Math.max(originY, window.innerHeight - originY),
+    const viewportWidth = Math.max(
+        window.innerWidth,
+        document.documentElement.clientWidth,
+        window.visualViewport?.width || 0,
     );
+    const viewportHeight = Math.max(
+        window.innerHeight,
+        document.documentElement.clientHeight,
+        window.visualViewport?.height || 0,
+    );
+    const farthestCorner = Math.hypot(
+        Math.max(originX, viewportWidth - originX),
+        Math.max(originY, viewportHeight - originY),
+    );
+    // Overshoot the farthest corner so mobile viewport changes and
+    // subpixel clipping cannot leave a corner for a sudden final fill.
+    const revealRadius = farthestCorner + Math.max(viewportWidth, viewportHeight) * 0.08;
 
     document.documentElement.style.setProperty("--theme-origin-x", `${originX}px`);
     document.documentElement.style.setProperty("--theme-origin-y", `${originY}px`);
