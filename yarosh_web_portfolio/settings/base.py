@@ -18,9 +18,7 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parents[2]
 load_dotenv(BASE_DIR / ".env")
 
-SECRET_KEY = os.environ.get("SECRET_KEY", "")
-if not SECRET_KEY:
-    raise ValueError("Set SECRET_KEY in the environment or the project .env file.")
+SECRET_KEY = os.environ["SECRET_KEY"]
 
 # Application definition
 

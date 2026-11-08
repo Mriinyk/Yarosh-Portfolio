@@ -3,14 +3,14 @@ Photographer Oleksandra Yarosh's portfolio website
 
 ## Environment configuration
 
-Copy `.env.example` to `.env` and set a private Django `SECRET_KEY`. The
-default settings module is `yarosh_web_portfolio.settings.development`, which
-keeps `DEBUG=True` and uses SQLite. Set `DJANGO_SETTINGS_MODULE` to
-`yarosh_web_portfolio.settings.production` in the deployment environment to use
-PostgreSQL. The production environment also needs `ALLOWED_HOSTS` as a
-comma-separated list of hostnames. Set the Telegram bot token and chat ID to
-enable contact-form notifications; leave either value blank to disable them.
-Do not commit `.env`.
+Copy `.env.example` to `.env` for local development and set a private Django
+`SECRET_KEY`. The default settings module is
+`yarosh_web_portfolio.settings.development`, which keeps `DEBUG=True` and uses
+SQLite. Use `.env.example` as the environment-variable checklist for Render;
+set `DJANGO_SETTINGS_MODULE` there to
+`yarosh_web_portfolio.settings.production` and provide the PostgreSQL values.
+Render supplies `RENDER_EXTERNAL_HOSTNAME`, which production settings add to
+`ALLOWED_HOSTS`. Do not commit `.env` or put real secrets in `.env.example`.
 
 Install project dependencies and apply local development migrations:
 
@@ -54,6 +54,18 @@ python manage.py collectstatic --noinput
 
 The collected files are written to `staticfiles/`; WhiteNoise serves them from
 there after the application starts.
+
+## Render deployment
+
+Set the Render build command to `bash ./build.sh` and the start command to:
+
+```sh
+python -m gunicorn yarosh_web_portfolio.wsgi:application --workers 1 --threads 10 --bind 0.0.0.0:$PORT
+```
+
+Add the production values from `.env.example` to the Render service's
+environment. The build script installs dependencies, collects static files,
+and applies database migrations.
 
 ## Database upgrades
 

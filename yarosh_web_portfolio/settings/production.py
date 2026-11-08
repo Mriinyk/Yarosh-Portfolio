@@ -24,9 +24,13 @@ ALLOWED_HOSTS = [
     for host in os.environ.get("ALLOWED_HOSTS", "").split(",")
     if host.strip()
 ]
+RENDER_EXTERNAL_HOSTNAME = os.environ.get("RENDER_EXTERNAL_HOSTNAME", "").strip()
+if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 required_database_settings = (
     "POSTGRES_DB",
+    "POSTGRES_DB_PORT",
     "POSTGRES_USER",
     "POSTGRES_PASSWORD",
     "POSTGRES_HOST",
@@ -47,7 +51,7 @@ DATABASES = {
         "USER": os.environ["POSTGRES_USER"],
         "PASSWORD": os.environ["POSTGRES_PASSWORD"],
         "HOST": os.environ["POSTGRES_HOST"],
-        "PORT": os.environ.get("POSTGRES_DB_PORT", "5432"),
+        "PORT": os.environ["POSTGRES_DB_PORT"],
         "OPTIONS": {"sslmode": "require"},
         "CONN_MAX_AGE": 60,
     }
