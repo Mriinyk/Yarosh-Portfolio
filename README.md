@@ -4,17 +4,56 @@ Photographer Oleksandra Yarosh's portfolio website
 ## Environment configuration
 
 Copy `.env.example` to `.env` and set a private Django `SECRET_KEY`. The
-development configuration keeps `DEBUG=True`; set the Telegram bot token and
-chat ID to enable contact-form notifications. Leave either Telegram value
-blank to keep requests in the database without sending notifications. Do not
-commit `.env`.
+default settings module is `yarosh_web_portfolio.settings.development`, which
+keeps `DEBUG=True` and uses SQLite. Set `DJANGO_SETTINGS_MODULE` to
+`yarosh_web_portfolio.settings.production` in the deployment environment to use
+PostgreSQL. The production environment also needs `ALLOWED_HOSTS` as a
+comma-separated list of hostnames. Set the Telegram bot token and chat ID to
+enable contact-form notifications; leave either value blank to disable them.
+Do not commit `.env`.
 
-Install project dependencies and apply migrations:
+Install project dependencies and apply local development migrations:
+
+**Windows (PowerShell)**
 
 ```powershell
 .\venv\Scripts\python.exe -m pip install -r requirements.txt
 .\venv\Scripts\python.exe manage.py migrate
 ```
+
+**macOS and Linux**
+
+```sh
+python3 -m venv .venv
+source .venv/bin/activate
+cp .env.example .env
+python -m pip install -r requirements.txt
+python manage.py migrate
+```
+
+Replace the example `SECRET_KEY` in `.env` with a private key before running
+the application. To start the local development server, run
+`python manage.py runserver` with the virtual environment activated.
+
+## Production static files
+
+Production uses WhiteNoise to serve compressed, fingerprinted static assets.
+Before deployment, collect the assets using the production settings module:
+
+```powershell
+$env:DJANGO_SETTINGS_MODULE = "yarosh_web_portfolio.settings.production"
+.\venv\Scripts\python.exe manage.py collectstatic --noinput
+```
+
+**macOS and Linux**
+
+```sh
+export DJANGO_SETTINGS_MODULE=yarosh_web_portfolio.settings.production
+python manage.py collectstatic --noinput
+```
+
+The collected files are written to `staticfiles/`; WhiteNoise serves them from
+there after the application starts.
 
 ## Database upgrades
 
@@ -25,6 +64,13 @@ Django's default user model, back up the database, then run:
 ```powershell
 .\venv\Scripts\python.exe manage.py adopt_legacy_auth_user
 .\venv\Scripts\python.exe manage.py migrate
+```
+
+**macOS and Linux**
+
+```sh
+python manage.py adopt_legacy_auth_user
+python manage.py migrate
 ```
 
 For a new database, run `manage.py migrate` normally; do not run the adoption
@@ -40,6 +86,14 @@ migrations to a new database, restore it with:
 .\venv\Scripts\python.exe manage.py migrate
 .\venv\Scripts\python.exe manage.py restore_site_content
 .\venv\Scripts\python.exe manage.py createsuperuser
+```
+
+**macOS and Linux**
+
+```sh
+python manage.py migrate
+python manage.py restore_site_content
+python manage.py createsuperuser
 ```
 
 The restore command imports hero slides, photo-session types and sessions, and

@@ -8,9 +8,15 @@ https://docs.djangoproject.com/en/6.1/howto/deployment/wsgi/
 """
 
 import os
+from pathlib import Path
 
 from django.core.wsgi import get_wsgi_application
+from dotenv import load_dotenv
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "yarosh_web_portfolio.settings")
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+os.environ.setdefault(
+    "DJANGO_SETTINGS_MODULE",
+    "yarosh_web_portfolio.settings.development",
+)
 
 application = get_wsgi_application()
