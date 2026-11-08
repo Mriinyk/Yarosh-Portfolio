@@ -95,7 +95,7 @@ function toggleTheme(button) {
     if (useFallbackFade) {
         window.setTimeout(() => {
             document.documentElement.classList.remove("theme-fallback-transition");
-        }, 450);
+        }, 495);
     }
 }
 

@@ -884,8 +884,14 @@
     closeButton.addEventListener("click", (event) => {
         closeGallery({ pointerInitiated: event.detail > 0 });
     });
-    previousButton.addEventListener("click", () => showImage(currentIndex - 1, -1));
-    nextButton.addEventListener("click", () => showImage(currentIndex + 1, 1));
+    previousButton.addEventListener("click", () => {
+        highlightNavigationButton(previousButton);
+        showImage(currentIndex - 1, -1);
+    });
+    nextButton.addEventListener("click", () => {
+        highlightNavigationButton(nextButton);
+        showImage(currentIndex + 1, 1);
+    });
     [previousButton, nextButton].forEach((button) => {
         button.addEventListener("pointerdown", () => highlightNavigationButton(button));
     });
@@ -909,6 +915,7 @@
         touchStartX = null;
         if (Math.abs(distance) > 45) {
             const direction = distance < 0 ? 1 : -1;
+            highlightNavigationButton(direction > 0 ? nextButton : previousButton);
             showImage(currentIndex + direction, direction);
         }
     }, { passive: true });
