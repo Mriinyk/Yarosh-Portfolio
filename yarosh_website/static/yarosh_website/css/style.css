@@ -1992,6 +1992,7 @@ html[data-theme="dark"] .auth-link {
     padding-inline: 0.6rem;
     padding-bottom: 2px;
     overflow: hidden;
+    overflow-anchor: none;
     overscroll-behavior-x: contain;
     scrollbar-width: none;
 }

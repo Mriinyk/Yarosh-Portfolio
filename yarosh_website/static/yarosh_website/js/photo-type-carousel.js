@@ -57,9 +57,14 @@
         const style = window.getComputedStyle(nav);
         const padLeft = parseFloat(style.paddingLeft) || 0;
         const padRight = parseFloat(style.paddingRight) || 0;
-        const first = baseLinks[0].getBoundingClientRect();
-        const last = baseLinks[baseLinks.length - 1].getBoundingClientRect();
-        return (last.right - first.left) + padLeft + padRight;
+        // offset metrics ignore the active link's visual scale transform.
+        // Using bounding boxes here makes Safari think the carousel width
+        // changed while the active category animates, which can rebuild it
+        // repeatedly and make the links jump.
+        const first = baseLinks[0];
+        const last = baseLinks[baseLinks.length - 1];
+        return (last.offsetLeft + last.offsetWidth - first.offsetLeft)
+            + padLeft + padRight;
     };
 
     const activeBaseLink = () => (
@@ -72,8 +77,7 @@
         if (!anchorClone || !baseLinks[0]) {
             return 0;
         }
-        return anchorClone.getBoundingClientRect().left
-            - baseLinks[0].getBoundingClientRect().left;
+        return anchorClone.offsetLeft - baseLinks[0].offsetLeft;
     };
 
     const removeClones = () => {
@@ -183,7 +187,7 @@
         centerAnimationFrame = window.requestAnimationFrame(animateCenter);
     };
 
-    const build = () => {
+    const build = (preserveHref = "") => {
         removeClones();
         // Keep a scrollable carousel even when all base links fit.
         nav.classList.add("is-carousel", "is-scrollable");
@@ -192,9 +196,12 @@
         lastContentWidth = contentWidth();
         const style = window.getComputedStyle(nav);
         const gap = parseFloat(style.columnGap) || 0;
-        const first = baseLinks[0].getBoundingClientRect();
-        const last = baseLinks[baseLinks.length - 1].getBoundingClientRect();
-        const period = Math.max((last.right - first.left) + gap, 1);
+        const first = baseLinks[0];
+        const last = baseLinks[baseLinks.length - 1];
+        const period = Math.max(
+            last.offsetLeft + last.offsetWidth - first.offsetLeft + gap,
+            1,
+        );
         const copies = Math.max(1, Math.ceil(nav.clientWidth / period));
         for (let index = 0; index < copies; index += 1) {
             nav.prepend(...cloneSet());
@@ -203,7 +210,11 @@
             nav.append(...cloneSet());
         }
         anchorClone = baseLinks[baseLinks.length - 1].nextElementSibling;
-        centerOn(activeBaseLink(), "instant");
+        const preserveLink = preserveHref
+            ? Array.from(nav.querySelectorAll(".photo-type-link"))
+                .find((link) => normalizeUrl(hrefOf(link)) === preserveHref)
+            : null;
+        centerOn(centerableLink(preserveLink || activeBaseLink()), "instant");
     };
 
     const setActive = (link) => {
@@ -263,7 +274,11 @@
             && nav.clientWidth === lastClientWidth) {
             return false;
         }
-        build();
+        // Keep the category currently in view centred when a real width or
+        // font change requires rebuilding. Safari can emit resize events as
+        // its browser chrome changes; rebuilding must not jump back to active.
+        const current = nearestLink();
+        build(current ? normalizeUrl(hrefOf(current)) : "");
         return true;
     };
 
