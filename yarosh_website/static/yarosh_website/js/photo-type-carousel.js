@@ -1,7 +1,6 @@
 (() => {
-    // Desktop categories form an infinite carousel; mobile categories wrap
-    // into rows and change only when tapped. Both modes load sessions without
-    // a full page reload.
+    // Categories form an infinite carousel. On mobile, swiping only moves the
+    // strip; a category becomes active only when the user taps its link.
     const nav = document.querySelector(".photo-type-nav");
     const grid = document.querySelector(".photo-session-grid");
     const section = document.querySelector(".photos-page");
@@ -14,7 +13,6 @@
     let baseLinks = [];
     let anchorClone = null;
     let scrollable = false;
-    let lastIsMobile = null;
     let fetchVersion = 0;
     let activeHref = "";
     let lastContentWidth = 0;
@@ -23,6 +21,7 @@
     let resizeTimer = null;
     let wheelTimer = null;
     let wheelLocked = false;
+    let isTouching = false;
     let touchJustCentered = false;
     let scrollLocked = false;
     let centerAnimationFrame = null;
@@ -186,15 +185,7 @@
 
     const build = () => {
         removeClones();
-        lastIsMobile = isMobile();
-        if (lastIsMobile) {
-            nav.classList.remove("is-carousel", "is-scrollable");
-            scrollable = false;
-            lastClientWidth = nav.clientWidth;
-            lastContentWidth = contentWidth();
-            return;
-        }
-        // Desktop keeps a scrollable carousel even when all base links fit.
+        // Keep a scrollable carousel even when all base links fit.
         nav.classList.add("is-carousel", "is-scrollable");
         scrollable = true;
         lastClientWidth = nav.clientWidth;
@@ -268,8 +259,7 @@
         if (!baseLinks.length) {
             return false;
         }
-        if (isMobile() === lastIsMobile
-            && Math.abs(contentWidth() - lastContentWidth) < 0.5
+        if (Math.abs(contentWidth() - lastContentWidth) < 0.5
             && nav.clientWidth === lastClientWidth) {
             return false;
         }
@@ -398,7 +388,7 @@
     });
 
     nav.addEventListener("wheel", (event) => {
-        if (!scrollable) {
+        if (!scrollable || isMobile()) {
             return;
         }
         if (Math.abs(event.deltaY) < Math.abs(event.deltaX)) {
@@ -433,14 +423,24 @@
         centerOn(centerableLink(sibling, direction), centerBehavior());
     }, { passive: false });
 
-    nav.addEventListener("scroll", () => {
+    const settleAfterScroll = () => {
         window.clearTimeout(settleTimer);
         settleTimer = window.setTimeout(() => {
-            if (!scrollable || touchJustCentered || scrollLocked) {
+            if (!scrollable || isTouching || touchJustCentered || scrollLocked) {
                 return;
             }
             normalizeLoop();
             const nearest = nearestLink();
+            if (!nearest) {
+                return;
+            }
+            if (isMobile()) {
+                const centered = centerableLink(nearest);
+                if (centered && Math.abs(centerTargetFor(centered) - nav.scrollLeft) > 1) {
+                    centerOn(centered, centerBehavior());
+                }
+                return;
+            }
             if (!nearest || normalizeUrl(hrefOf(nearest)) === activeHref) {
                 return;
             }
@@ -448,7 +448,19 @@
             centerOn(centerableLink(nearest), "instant");
             applyFilter(hrefOf(nearest), { push: true });
         }, 150);
+    };
+
+    nav.addEventListener("touchstart", () => {
+        isTouching = true;
+        window.clearTimeout(settleTimer);
+    }, { passive: true });
+    ["touchend", "touchcancel"].forEach((eventName) => {
+        nav.addEventListener(eventName, () => {
+            isTouching = false;
+            settleAfterScroll();
+        }, { passive: true });
     });
+    nav.addEventListener("scroll", settleAfterScroll, { passive: true });
 
     section.addEventListener("click", (event) => {
         const link = event.target.closest?.(".photo-pagination a");
