@@ -24,7 +24,7 @@
     let isTouching = false;
     let touchJustCentered = false;
     let scrollLocked = false;
-    let centerAnimationFrame = null;
+    let scrollUnlockTimer = null;
     let gridAnimationTimer = null;
 
     const hrefOf = (link) => link.getAttribute("href") || "";
@@ -152,39 +152,24 @@
         if (!scrollable || !link) {
             return;
         }
-        if (centerAnimationFrame !== null) {
-            window.cancelAnimationFrame(centerAnimationFrame);
-            centerAnimationFrame = null;
+        window.clearTimeout(scrollUnlockTimer);
+        const maxScroll = nav.scrollWidth - nav.clientWidth;
+        const targetLeft = Math.max(0, Math.min(maxScroll, centerTargetFor(link)));
+        if (Math.abs(targetLeft - nav.scrollLeft) < 1) {
+            scrollLocked = false;
+            return;
         }
-        const targetLeft = Math.max(0, centerTargetFor(link));
         scrollLocked = true;
         if (behavior === "instant" || prefersReducedMotion()) {
             nav.scrollLeft = targetLeft;
-            window.setTimeout(() => { scrollLocked = false; }, 80);
+            scrollUnlockTimer = window.setTimeout(() => { scrollLocked = false; }, 100);
             return;
         }
 
-        const startLeft = nav.scrollLeft;
-        const distance = targetLeft - startLeft;
-        const duration = 620;
-        let startTime = null;
-        const animateCenter = (time) => {
-            if (startTime === null) {
-                startTime = time;
-            }
-            const progress = Math.min((time - startTime) / duration, 1);
-            const eased = progress < 0.5
-                ? 4 * progress * progress * progress
-                : 1 - Math.pow(-2 * progress + 2, 3) / 2;
-            nav.scrollLeft = startLeft + distance * eased;
-            if (progress < 1) {
-                centerAnimationFrame = window.requestAnimationFrame(animateCenter);
-                return;
-            }
-            centerAnimationFrame = null;
-            scrollLocked = false;
-        };
-        centerAnimationFrame = window.requestAnimationFrame(animateCenter);
+        // Native smooth scrolling cooperates with touch momentum and the
+        // mobile scroll-snap behavior instead of writing scrollLeft each frame.
+        nav.scrollTo({ left: targetLeft, behavior: "smooth" });
+        scrollUnlockTimer = window.setTimeout(() => { scrollLocked = false; }, 800);
     };
 
     const build = (preserveHref = "") => {
@@ -486,6 +471,13 @@
         }, { passive: true });
     });
     nav.addEventListener("scroll", settleAfterScroll, { passive: true });
+    nav.addEventListener("scrollend", () => {
+        if (!scrollLocked) {
+            return;
+        }
+        window.clearTimeout(scrollUnlockTimer);
+        scrollLocked = false;
+    });
 
     section.addEventListener("click", (event) => {
         const link = event.target.closest?.(".photo-pagination a");
