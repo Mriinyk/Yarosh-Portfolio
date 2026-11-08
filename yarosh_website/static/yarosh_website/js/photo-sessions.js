@@ -362,7 +362,7 @@
         }, { passive: false });
 
         carousel.addEventListener("touchstart", (event) => {
-            if (scrollTargetLeft !== null || isScrolling || navLocked) {
+            if (isMobile() || scrollTargetLeft !== null || isScrolling || navLocked) {
                 return;
             }
             const touch = event.changedTouches[0];
@@ -370,23 +370,25 @@
         }, { passive: true });
 
         carousel.addEventListener("touchmove", (event) => {
-            if (!touchStart) {
+            if (isMobile() || !touchStart) {
                 return;
             }
             event.preventDefault();
         }, { passive: false });
 
         carousel.addEventListener("touchend", (event) => {
+            if (isMobile()) {
+                touchStart = null;
+                return;
+            }
             if (!touchStart || navLocked) {
                 touchStart = null;
                 return;
             }
             const touch = event.changedTouches[0];
             const dx = touch.clientX - touchStart.x;
-            const dy = touch.clientY - touchStart.y;
             touchStart = null;
-            const mobile = isMobile();
-            const distance = mobile ? dy : dx;
+            const distance = dx;
             if (Math.abs(distance) < 40) {
                 return;
             }

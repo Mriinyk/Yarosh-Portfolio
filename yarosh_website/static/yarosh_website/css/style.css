@@ -2009,6 +2009,12 @@ html[data-theme="dark"] .auth-link {
     flex: 0 0 auto;
 }
 
+@media (max-width: 767.98px) {
+    .photo-type-nav {
+        gap: 0.2rem 1.25rem;
+    }
+}
+
 .photo-session-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));

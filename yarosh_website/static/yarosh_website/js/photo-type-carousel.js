@@ -1,7 +1,7 @@
 (() => {
-    // Adaptive infinite category carousel for the photos page. The strip
-    // clones its links to loop seamlessly, snaps the centred category into
-    // place and loads the matching sessions without a full page reload.
+    // Desktop categories form an infinite carousel; mobile categories wrap
+    // into rows and change only when tapped. Both modes load sessions without
+    // a full page reload.
     const nav = document.querySelector(".photo-type-nav");
     const grid = document.querySelector(".photo-session-grid");
     const section = document.querySelector(".photos-page");
@@ -14,6 +14,7 @@
     let baseLinks = [];
     let anchorClone = null;
     let scrollable = false;
+    let lastIsMobile = null;
     let fetchVersion = 0;
     let activeHref = "";
     let lastContentWidth = 0;
@@ -22,12 +23,6 @@
     let resizeTimer = null;
     let wheelTimer = null;
     let wheelLocked = false;
-    let touchStartX = null;
-    let touchStartScrollLeft = 0;
-    let touchLocked = false;
-    let touchTimer = null;
-    let isTouching = false;
-    let touchStartActive = null;
     let touchJustCentered = false;
     let scrollLocked = false;
     let centerAnimationFrame = null;
@@ -38,6 +33,8 @@
     const prefersReducedMotion = () => window.matchMedia(
         "(prefers-reduced-motion: reduce)",
     ).matches;
+
+    const isMobile = () => window.matchMedia("(max-width: 767.98px)").matches;
 
     const centerBehavior = () => (prefersReducedMotion() ? "instant" : "smooth");
 
@@ -189,8 +186,15 @@
 
     const build = () => {
         removeClones();
-        // The strip is always a scrollable carousel — even on wide desktop
-        // screens where the base links would fit on their own.
+        lastIsMobile = isMobile();
+        if (lastIsMobile) {
+            nav.classList.remove("is-carousel", "is-scrollable");
+            scrollable = false;
+            lastClientWidth = nav.clientWidth;
+            lastContentWidth = contentWidth();
+            return;
+        }
+        // Desktop keeps a scrollable carousel even when all base links fit.
         nav.classList.add("is-carousel", "is-scrollable");
         scrollable = true;
         lastClientWidth = nav.clientWidth;
@@ -264,7 +268,8 @@
         if (!baseLinks.length) {
             return false;
         }
-        if (Math.abs(contentWidth() - lastContentWidth) < 0.5
+        if (isMobile() === lastIsMobile
+            && Math.abs(contentWidth() - lastContentWidth) < 0.5
             && nav.clientWidth === lastClientWidth) {
             return false;
         }
@@ -428,58 +433,10 @@
         centerOn(centerableLink(sibling, direction), centerBehavior());
     }, { passive: false });
 
-    nav.addEventListener("touchstart", (event) => {
-        touchStartX = event.changedTouches[0].clientX;
-        touchStartScrollLeft = nav.scrollLeft;
-        touchStartActive = activeBaseLink();
-        isTouching = true;
-    }, { passive: true });
-
-    nav.addEventListener("touchmove", (event) => {
-        // Prevent native scrolling so the carousel doesn't drift during the
-        // swipe; we move exactly one category on touchend instead.
-        event.preventDefault();
-    }, { passive: false });
-
-    nav.addEventListener("touchend", (event) => {
-        isTouching = false;
-        window.clearTimeout(settleTimer);
-        if (touchStartX === null || touchLocked) {
-            touchStartX = null;
-            touchStartActive = null;
-            return;
-        }
-        const distance = event.changedTouches[0].clientX - touchStartX;
-        touchStartX = null;
-        const startActive = touchStartActive;
-        touchStartActive = null;
-        if (Math.abs(distance) < 30) {
-            return;
-        }
-        event.preventDefault();
-        const direction = distance > 0 ? 1 : -1;
-        const sibling = direction > 0
-            ? startActive?.nextElementSibling
-            : startActive?.previousElementSibling;
-        if (!sibling?.classList?.contains("photo-type-link")) {
-            return;
-        }
-        touchLocked = true;
-        touchJustCentered = true;
-        window.setTimeout(() => { touchJustCentered = false; }, 1000);
-        window.clearTimeout(touchTimer);
-        touchTimer = window.setTimeout(() => {
-            touchLocked = false;
-        }, 450);
-        // Set active first so font size is final before measuring rect.
-        setActive(sibling);
-        centerOn(sibling, centerBehavior());
-    }, { passive: false });
-
     nav.addEventListener("scroll", () => {
         window.clearTimeout(settleTimer);
         settleTimer = window.setTimeout(() => {
-            if (!scrollable || isTouching || touchJustCentered || scrollLocked) {
+            if (!scrollable || touchJustCentered || scrollLocked) {
                 return;
             }
             normalizeLoop();
