@@ -233,21 +233,33 @@
         });
     };
 
-    // Jump one full period so the visible window always sits on real links,
-    // keeping the loop seamless while the scroll position stays bounded.
+    // Recenter only when the user reaches an actual end of the cloned strip.
+    // A whole period of padding as the trigger can overlap on narrow screens
+    // and repeatedly move the carousel back and forth after every swipe.
     const normalizeLoop = () => {
         const period = periodLength();
         if (!scrollable || period <= 0) {
             return;
         }
-        const padLeft = parseFloat(window.getComputedStyle(nav).paddingLeft) || 0;
         const maxScroll = nav.scrollWidth - nav.clientWidth;
         const left = nav.scrollLeft;
-        if (left > maxScroll - period) {
-            nav.scrollLeft = left - period;
-        } else if (left < padLeft + period) {
-            nav.scrollLeft = left + period;
+        const edgeThreshold = Math.max(2, Math.min(nav.clientWidth * 0.2, period * 0.2));
+        if (left > edgeThreshold && left < maxScroll - edgeThreshold) {
+            return;
         }
+
+        // Find an equivalent position (an integer number of category cycles
+        // away) inside the safe middle of the strip. This also handles very
+        // short category sets where a fixed-size jump could bounce between
+        // both edges on consecutive scroll events.
+        const minTurns = Math.ceil((edgeThreshold + 1 - left) / period);
+        const maxTurns = Math.floor((maxScroll - edgeThreshold - 1 - left) / period);
+        if (minTurns > maxTurns) {
+            return;
+        }
+        const middleTurns = Math.round((maxScroll / 2 - left) / period);
+        const turns = Math.max(minTurns, Math.min(maxTurns, middleTurns));
+        nav.scrollLeft = left + turns * period;
     };
 
     const nearestLink = () => {
@@ -450,10 +462,8 @@
                 return;
             }
             if (isMobile()) {
-                const centered = centerableLink(nearest);
-                if (centered && Math.abs(centerTargetFor(centered) - nav.scrollLeft) > 1) {
-                    centerOn(centered, centerBehavior());
-                }
+                // Let native touch momentum and CSS scroll-snap settle the
+                // strip; a second scripted scroll here fights the gesture.
                 return;
             }
             if (!nearest || normalizeUrl(hrefOf(nearest)) === activeHref) {

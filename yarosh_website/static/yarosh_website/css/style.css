@@ -2014,6 +2014,14 @@ html[data-theme="dark"] .auth-link {
     .photo-type-nav {
         gap: 0.2rem 1.25rem;
     }
+
+    .photo-type-nav.is-carousel.is-scrollable {
+        scroll-snap-type: x proximity;
+    }
+
+    .photo-type-nav.is-carousel.is-scrollable .photo-type-link {
+        scroll-snap-align: center;
+    }
 }
 
 .photo-session-grid {
