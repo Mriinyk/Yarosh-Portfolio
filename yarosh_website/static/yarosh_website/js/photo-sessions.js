@@ -483,7 +483,7 @@
         navHighlightTimers.set(button, window.setTimeout(() => {
             button.classList.remove("photo-gallery-nav--hovered");
             navHighlightTimers.delete(button);
-        }, 1300));
+        }, 500));
     };
 
     const showImage = (index, direction = 0) => {
@@ -914,8 +914,16 @@
         showImage(currentIndex + 1, 1);
     });
     [previousButton, nextButton].forEach((button) => {
-        button.addEventListener("pointerdown", () => highlightNavigationButton(button));
+        button.addEventListener("pointerdown", () => {
+            gallery.classList.remove("photo-gallery-modal--keyboard-navigation");
+            highlightNavigationButton(button);
+        });
     });
+    gallery.addEventListener("pointermove", (event) => {
+        if (event.pointerType === "mouse" || event.pointerType === "pen") {
+            gallery.classList.remove("photo-gallery-modal--keyboard-navigation");
+        }
+    }, { passive: true });
     gallery.addEventListener("click", (event) => {
         if (event.target === gallery || event.target === viewer) {
             closeGallery({ pointerInitiated: event.detail > 0 });
@@ -950,9 +958,17 @@
             closeButton.blur();
             closeButton.classList.remove("photo-gallery-close--hovered");
         } else if (event.key === "ArrowLeft") {
+            gallery.classList.add("photo-gallery-modal--keyboard-navigation");
+            if (previousButton === document.activeElement || nextButton === document.activeElement) {
+                gallery.focus({ preventScroll: true });
+            }
             highlightNavigationButton(previousButton);
             showImage(currentIndex - 1, -1);
         } else if (event.key === "ArrowRight") {
+            gallery.classList.add("photo-gallery-modal--keyboard-navigation");
+            if (previousButton === document.activeElement || nextButton === document.activeElement) {
+                gallery.focus({ preventScroll: true });
+            }
             highlightNavigationButton(nextButton);
             showImage(currentIndex + 1, 1);
         }

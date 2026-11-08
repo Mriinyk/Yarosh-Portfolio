@@ -967,6 +967,12 @@ body.photo-gallery-open .photos-search input {
     }
 }
 
+.photo-gallery-modal--keyboard-navigation .photo-gallery-nav:hover:not(:focus-visible):not(.photo-gallery-nav--hovered) {
+    border-color: rgba(252, 252, 252, 0.28);
+    color: #fcfcfc;
+    box-shadow: none;
+}
+
 html[data-theme="dark"] .photo-session-card {
     box-shadow:
         0 0.2rem 0.5rem rgba(0, 0, 0, 0.3),
