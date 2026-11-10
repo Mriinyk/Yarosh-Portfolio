@@ -2556,22 +2556,58 @@ html[data-theme="dark"] .photo-comments-login a {
     margin-top: clamp(2.5rem, 6vw, 4rem);
 }
 
-.photo-pagination a,
-.photo-pagination span {
-    display: grid;
-    min-width: 2.6rem;
-    min-height: 2.6rem;
-    padding: 0 0.7rem;
+.photo-pagination > a,
+.photo-pagination > span {
+    display: flex;
+    box-sizing: border-box;
+    width: 2.6rem;
+    height: 2.6rem;
+    flex: 0 0 2.6rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
     border: 1px solid var(--auth-border);
     border-radius: 50%;
     color: var(--nav-ink);
     font-size: 0.85rem;
+    line-height: 1;
+    text-align: center;
     text-decoration: none;
-    place-items: center;
+}
+
+.photo-pagination a[aria-label] {
+    font-size: 0.85rem;
+}
+
+.photo-pagination-number {
+    display: block;
+    width: 1.2rem;
+    height: 1.2rem;
+    overflow: visible;
+    font-family: Arial, sans-serif;
+    fill: currentColor;
+}
+
+.photo-pagination-number text {
+    font-size: 20px;
+    font-variant-numeric: lining-nums tabular-nums;
+    font-weight: 400;
+}
+
+.photo-pagination a[aria-label] svg {
+    display: block;
+    width: 1rem;
+    height: 1rem;
+    overflow: visible;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.5;
 }
 
 .photo-pagination a:hover,
-.photo-pagination span[aria-current="page"] {
+.photo-pagination > span[aria-current="page"] {
     border-color: var(--accent);
     background: rgba(53, 112, 47, 0.12);
     box-shadow: 0 0 0.85rem rgba(53, 112, 47, 0.22);

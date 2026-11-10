@@ -179,6 +179,48 @@
   }
 },
 {
+  "model": "yarosh_website.photosession",
+  "pk": 18,
+  "fields": {
+    "title": "Portrait of Sophia",
+    "search_title": "portrait of sophia",
+    "photo_type": 1,
+    "cover_url": "https://lh3.googleusercontent.com/d/1Xbti2dEUynuF1l5qJDhLVqxkVco9q5XB",
+    "drive_folder_url": "https://drive.google.com/drive/folders/1D9U0vx-n8hqhuLfhs42tee1O_wmdIvw3",
+    "created_at": "2026-11-10T12:59:39.430Z",
+    "order": 0,
+    "is_active": true
+  }
+},
+{
+  "model": "yarosh_website.photosession",
+  "pk": 19,
+  "fields": {
+    "title": "Spider-man Noir",
+    "search_title": "spider-man noir",
+    "photo_type": 2,
+    "cover_url": "https://lh3.googleusercontent.com/d/1LCkf4T7nv8Dku-IORv5AQ8-h7rxIcdPJ",
+    "drive_folder_url": "https://drive.google.com/drive/folders/1Zct6VGBxOU0TIiVk2hdN8wqHYA03y9Ht",
+    "created_at": "2026-11-10T13:01:19.885Z",
+    "order": 0,
+    "is_active": true
+  }
+},
+{
+  "model": "yarosh_website.photosession",
+  "pk": 20,
+  "fields": {
+    "title": "Halloween 2026",
+    "search_title": "halloween 2026",
+    "photo_type": 3,
+    "cover_url": "https://lh3.googleusercontent.com/d/1-YKbIKX-ck7B88nXWOeyvA6mi0DaxUkH",
+    "drive_folder_url": "https://drive.google.com/drive/folders/1A2l-2Ds2eBMzevsUKly5CBdqbZR2Qtxb",
+    "created_at": "2026-11-10T13:16:48.628Z",
+    "order": 0,
+    "is_active": true
+  }
+},
+{
   "model": "yarosh_website.biography",
   "pk": 1,
   "fields": {
