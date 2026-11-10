@@ -812,6 +812,37 @@ class PhotoSessionPageTests(TestCase):
             ["Літній портрет"],
         )
 
+    def test_photo_pagination_keeps_category_filter_after_nine_sessions(self):
+        PhotoSession.objects.bulk_create(
+            [
+                PhotoSession(
+                    title=f"Портрет {index}",
+                    photo_type=self.photo_type,
+                    cover_url=f"https://images.example.com/portrait-{index}.jpg",
+                    drive_folder_url=(
+                        f"https://drive.google.com/drive/folders/portrait-{index}"
+                    ),
+                )
+                for index in range(2, 11)
+            ]
+        )
+
+        response = self.client.get(
+            reverse("photos"),
+            {"type": self.photo_type.pk, "page": 2},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["page_obj"].paginator.count, 10)
+        self.assertEqual(response.context["page_obj"].paginator.num_pages, 2)
+        self.assertEqual(response.context["page_obj"].number, 2)
+        self.assertEqual(len(response.context["photo_sessions"]), 1)
+        self.assertEqual(
+            response.context["photo_sessions"][0].photo_type_id,
+            self.photo_type.pk,
+        )
+        self.assertContains(response, f"page=1&amp;type={self.photo_type.pk}")
+
     def test_uncategorized_sessions_can_be_filtered_for_legacy_content(self):
         uncategorized = PhotoSession.objects.create(
             title="Стара фотосесія",

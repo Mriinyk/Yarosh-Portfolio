@@ -26,16 +26,68 @@
     let scrollLocked = false;
     let scrollUnlockTimer = null;
     let gridAnimationTimer = null;
-
     const hrefOf = (link) => link.getAttribute("href") || "";
 
     const prefersReducedMotion = () => window.matchMedia(
         "(prefers-reduced-motion: reduce)",
     ).matches;
 
+    const gridExitDuration = () => (prefersReducedMotion() ? 0 : 700);
+
     const isMobile = () => window.matchMedia("(max-width: 767.98px)").matches;
 
     const centerBehavior = () => (prefersReducedMotion() ? "instant" : "smooth");
+
+    const scrollGridToStart = (onProgress) => {
+        const startY = window.scrollY;
+        const gridTop = grid.getBoundingClientRect().top + startY;
+        const maxScroll = Math.max(
+            0,
+            document.documentElement.scrollHeight - window.innerHeight,
+        );
+        const targetY = Math.max(0, Math.min(maxScroll, gridTop - 96));
+        const distance = targetY - startY;
+        const didScroll = Math.abs(distance) > 1;
+
+        grid.scrollIntoView({
+            behavior: centerBehavior(),
+            block: "start",
+        });
+        if (!didScroll) {
+            return Promise.resolve(false);
+        }
+        if (prefersReducedMotion()) {
+            onProgress(1);
+            return new Promise((resolve) => {
+                window.requestAnimationFrame(() => resolve(true));
+            });
+        }
+
+        return new Promise((resolve) => {
+            let previousY = startY;
+            let stableFrames = 0;
+            const startedAt = performance.now();
+            const checkScroll = () => {
+                const currentY = window.scrollY;
+                const linearProgress = Math.max(
+                    0,
+                    Math.min(1, (currentY - startY) / distance),
+                );
+                onProgress(Math.pow(linearProgress, 1.7));
+                stableFrames = Math.abs(currentY - previousY) < 1
+                    ? stableFrames + 1
+                    : 0;
+                previousY = currentY;
+                if (stableFrames >= 5 || performance.now() - startedAt >= 2500) {
+                    onProgress(1);
+                    resolve(true);
+                    return;
+                }
+                window.requestAnimationFrame(checkScroll);
+            };
+            window.requestAnimationFrame(checkScroll);
+        });
+    };
 
     const normalizeUrl = (url) => {
         try {
@@ -317,7 +369,7 @@
         });
     };
 
-    const applyFilter = async (url, { push = true } = {}) => {
+    const applyFilter = async (url, { push = true, scrollToGrid = false } = {}) => {
         const version = ++fetchVersion;
         try {
             const response = await fetch(url, {
@@ -337,14 +389,45 @@
                 throw new Error("У відповіді немає сітки фотосесій.");
             }
             // Reuse the grid node so delegated comment handlers keep working.
+            if (scrollToGrid) {
+                grid.classList.add("is-scroll-synced-out");
+                grid.style.setProperty("--grid-exit-opacity", "1");
+                grid.style.setProperty("--grid-exit-scale", "1");
+            }
             grid.classList.add("is-swapping-out");
-            await new Promise((resolve) => window.setTimeout(resolve, 180));
+            let didScroll = false;
+            if (scrollToGrid) {
+                didScroll = await scrollGridToStart((progress) => {
+                    grid.style.setProperty(
+                        "--grid-exit-opacity",
+                        String(1 - progress),
+                    );
+                    grid.style.setProperty(
+                        "--grid-exit-scale",
+                        String(1 - progress * 0.03),
+                    );
+                });
+            }
+            if (!didScroll) {
+                grid.classList.remove("is-scroll-synced-out");
+                grid.style.removeProperty("--grid-exit-opacity");
+                grid.style.removeProperty("--grid-exit-scale");
+                await new Promise((resolve) => {
+                    window.setTimeout(resolve, gridExitDuration());
+                });
+            }
             if (version !== fetchVersion) {
                 grid.classList.remove("is-swapping-out");
+                grid.classList.remove("is-scroll-synced-out");
+                grid.style.removeProperty("--grid-exit-opacity");
+                grid.style.removeProperty("--grid-exit-scale");
                 return;
             }
             grid.innerHTML = nextGrid.innerHTML;
             grid.classList.remove("is-swapping-out");
+            grid.classList.remove("is-scroll-synced-out");
+            grid.style.removeProperty("--grid-exit-opacity");
+            grid.style.removeProperty("--grid-exit-scale");
             grid.classList.add("is-swapping-in");
             window.clearTimeout(gridAnimationTimer);
             grid.querySelectorAll(".photo-work-card").forEach((card, index) => {
@@ -355,7 +438,7 @@
                 grid.querySelectorAll(".photo-work-card").forEach((card) => {
                     card.style.removeProperty("--entry-index");
                 });
-            }, 800);
+            }, 1000);
             syncSidePanels(doc);
             syncSearchType(url);
             document.dispatchEvent(new CustomEvent("photos:grid-updated"));
@@ -489,11 +572,7 @@
         if (!url) {
             return;
         }
-        applyFilter(url, { push: true });
-        grid.scrollIntoView({
-            behavior: prefersReducedMotion() ? "instant" : "smooth",
-            block: "start",
-        });
+        applyFilter(url, { push: true, scrollToGrid: true });
     });
 
     window.addEventListener("popstate", () => {
