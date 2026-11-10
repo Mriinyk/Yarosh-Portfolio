@@ -59,18 +59,15 @@ function toggleTheme(button) {
     }
     const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
     const bounds = button.getBoundingClientRect();
-    const originX = bounds.left + bounds.width / 2;
-    const originY = bounds.top + bounds.height / 2;
-    const viewportWidth = Math.max(
-        window.innerWidth,
-        document.documentElement.clientWidth,
-        window.visualViewport?.width || 0,
-    );
-    const viewportHeight = Math.max(
-        window.innerHeight,
-        document.documentElement.clientHeight,
-        window.visualViewport?.height || 0,
-    );
+    const visualViewport = window.visualViewport;
+    const viewportWidth = visualViewport?.width
+        || document.documentElement.clientWidth
+        || window.innerWidth;
+    const viewportHeight = visualViewport?.height
+        || document.documentElement.clientHeight
+        || window.innerHeight;
+    const originX = bounds.left + bounds.width / 2 - (visualViewport?.offsetLeft || 0);
+    const originY = bounds.top + bounds.height / 2 - (visualViewport?.offsetTop || 0);
     const farthestCorner = Math.hypot(
         Math.max(originX, viewportWidth - originX),
         Math.max(originY, viewportHeight - originY),
@@ -79,8 +76,14 @@ function toggleTheme(button) {
     // subpixel clipping cannot leave a corner for a sudden final fill.
     const revealRadius = farthestCorner + Math.max(viewportWidth, viewportHeight) * 0.08;
 
-    document.documentElement.style.setProperty("--theme-origin-x", `${originX}px`);
-    document.documentElement.style.setProperty("--theme-origin-y", `${originY}px`);
+    document.documentElement.style.setProperty(
+        "--theme-origin-x",
+        `${(originX / viewportWidth) * 100}%`,
+    );
+    document.documentElement.style.setProperty(
+        "--theme-origin-y",
+        `${(originY / viewportHeight) * 100}%`,
+    );
     document.documentElement.style.setProperty("--theme-reveal-radius", `${revealRadius}px`);
 
     if (
