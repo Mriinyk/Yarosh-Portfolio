@@ -81,6 +81,15 @@
   }
 },
 {
+  "model": "yarosh_website.photosessiontype",
+  "pk": 5,
+  "fields": {
+    "name": "Зйомка для Брендів",
+    "search_name": "зйомка для брендів",
+    "order": 5
+  }
+},
+{
   "model": "yarosh_website.photosession",
   "pk": 11,
   "fields": {
@@ -216,6 +225,62 @@
     "cover_url": "https://lh3.googleusercontent.com/d/1-YKbIKX-ck7B88nXWOeyvA6mi0DaxUkH",
     "drive_folder_url": "https://drive.google.com/drive/folders/1A2l-2Ds2eBMzevsUKly5CBdqbZR2Qtxb",
     "created_at": "2026-11-10T13:16:48.628Z",
+    "order": 0,
+    "is_active": true
+  }
+},
+{
+  "model": "yarosh_website.photosession",
+  "pk": 21,
+  "fields": {
+    "title": "Workshop Self-portrait",
+    "search_title": "workshop self-portrait",
+    "photo_type": 4,
+    "cover_url": "https://lh3.googleusercontent.com/d/1t9-UJO9hgIc5blfrtgLiSH17U7RHlo7H",
+    "drive_folder_url": "https://drive.google.com/drive/folders/1-uS1gAOOxJwgr1P-C9QZaGIe4sZwrAGf",
+    "created_at": "2026-11-11T09:27:31.573877Z",
+    "order": 0,
+    "is_active": true
+  }
+},
+{
+  "model": "yarosh_website.photosession",
+  "pk": 24,
+  "fields": {
+    "title": "Ridni Rechi",
+    "search_title": "ridni rechi",
+    "photo_type": 5,
+    "cover_url": "https://lh3.googleusercontent.com/d/15Hym-WDmp10g7Shz6xKvsUdP9xVef_bI",
+    "drive_folder_url": "https://drive.google.com/drive/folders/1W4HOlv7cC5nvIznVvXyglbeJUcISIAVc",
+    "created_at": "2026-11-11T10:05:47.084923Z",
+    "order": 0,
+    "is_active": true
+  }
+},
+{
+  "model": "yarosh_website.photosession",
+  "pk": 25,
+  "fields": {
+    "title": "Portrait of Julia",
+    "search_title": "portrait of julia",
+    "photo_type": 1,
+    "cover_url": "https://lh3.googleusercontent.com/d/1AY7qOrdqLXvam_DTx0-xyfjP581YvkqT",
+    "drive_folder_url": "https://drive.google.com/drive/folders/1kfTD6qDPFNZRJ3z4d2LOJH6pOW3Bbb8b",
+    "created_at": "2026-11-11T14:06:40.705198Z",
+    "order": 0,
+    "is_active": true
+  }
+},
+{
+  "model": "yarosh_website.photosession",
+  "pk": 26,
+  "fields": {
+    "title": "Portrait of Magdalena 2.0",
+    "search_title": "portrait of magdalena 2.0",
+    "photo_type": 1,
+    "cover_url": "https://lh3.googleusercontent.com/d/1Ng_w92uLQejic87ffBVx0QmfA_VWSe1h",
+    "drive_folder_url": "https://drive.google.com/drive/folders/1q9kE_nhRRt4pjeiHUIQ0203Cj-qF82jk",
+    "created_at": "2026-11-11T16:18:44.770227Z",
     "order": 0,
     "is_active": true
   }
