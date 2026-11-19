@@ -1796,13 +1796,6 @@ html[data-theme="dark"] .auth-link {
     }
 }
 
-@media (max-width: 767.98px) and (orientation: landscape) {
-    .site-navbar-top .site-theme-toggle-mobile {
-        right: 0.75rem;
-        left: auto;
-    }
-}
-
 @media (prefers-reduced-motion: reduce) {
     .auth-card,
     .auth-card::before,
